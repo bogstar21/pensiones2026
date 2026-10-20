@@ -1,0 +1,805 @@
+{
+  "fuente": {
+    "organismo": "Instituto Nacional de la Seguridad Social (INSS)",
+    "publicacion": "Pensiones contributivas del Sistema de la Seguridad Social en vigor",
+    "pagina": "https://www.seg-social.es/wps/portal/wss/internet/EstadisticasPresupuestosEstudios/Estadisticas/est23/est24",
+    "ficheros": {
+      "series": "https://www.seg-social.es/wps/wcm/connect/wss/85c56f05-1d11-4a4b-974f-14c4e5386427/S202609.xlsx?MOD=AJPERES&CONVERT_TO=linktext&CACHEID=ROOTWORKSPACE.Z18_2G50H38209D640QTQ57OVB2000-85c56f05-1d11-4a4b-974f-14c4e5386427-q3MHQjA",
+      "regimenes": "https://www.seg-social.es/wps/wcm/connect/wss/d6861a1d-a8ae-4791-b054-59a84eb6d250/REG202609.xlsx?MOD=AJPERES&CONVERT_TO=linktext&CACHEID=ROOTWORKSPACE.Z18_2G50H38209D640QTQ57OVB2000-d6861a1d-a8ae-4791-b054-59a84eb6d250-q3MHQhN",
+      "nomina": "https://www.seg-social.es/wps/wcm/connect/wss/fc6945e7-2e0b-48b5-9323-a93378285c74/ICONCEPTOS202609.xlsx?MOD=AJPERES&CONVERT_TO=linktext&CACHEID=ROOTWORKSPACE.Z18_2G50H38209D640QTQ57OVB2000-fc6945e7-2e0b-48b5-9323-a93378285c74-q3MHQkv"
+    },
+    "periodo": "202609",
+    "descargado": "2026-10-20",
+    "nota": "Pensiones en vigor a primero de mes. \"Número\" cuenta pensiones, no personas: una misma persona puede cobrar más de una (por ejemplo jubilación y viudedad)."
+  },
+  "ultimoPeriodo": {
+    "anyo": 2026,
+    "periodo": "1 septiembre"
+  },
+  "snapshot": {
+    "total": {
+      "numero": 10547417,
+      "importeMilesEur": 14498177.663490051,
+      "pensionMediaEurMes": 1374.57139160138
+    },
+    "incapacidadPermanente": {
+      "numero": 1060551,
+      "importeMilesEur": 1330878.096469995,
+      "pensionMediaEurMes": 1254.8930664060426
+    },
+    "jubilacion": {
+      "numero": 6760137,
+      "importeMilesEur": 10654635.466020001,
+      "pensionMediaEurMes": 1576.0975651854394
+    },
+    "viudedad": {
+      "numero": 2343844,
+      "importeMilesEur": 2288352.5222299933,
+      "pensionMediaEurMes": 976.3245856934136
+    },
+    "orfandad": {
+      "numero": 335900,
+      "importeMilesEur": 185541.40254999985,
+      "pensionMediaEurMes": 552.3709513247986
+    },
+    "favorFamiliares": {
+      "numero": 46985,
+      "importeMilesEur": 38770.17621999998,
+      "pensionMediaEurMes": 825.1607155475147
+    }
+  },
+  "evolucion": [
+    {
+      "anyo": 2022,
+      "periodo": "31 diciembre",
+      "clases": {
+        "total": {
+          "numero": 10009149,
+          "importeMilesEur": 10973708.682120034,
+          "pensionMediaEurMes": 1096.3678013105844
+        },
+        "incapacidadPermanente": {
+          "numero": 948476,
+          "importeMilesEur": 980995.95126,
+          "pensionMediaEurMes": 1034.2865304551724
+        },
+        "jubilacion": {
+          "numero": 6320939,
+          "importeMilesEur": 7973068.439720017,
+          "pensionMediaEurMes": 1261.3740521337124
+        },
+        "viudedad": {
+          "numero": 2354136,
+          "importeMilesEur": 1840983.1645600025,
+          "pensionMediaEurMes": 782.0207348088652
+        },
+        "orfandad": {
+          "numero": 340750,
+          "importeMilesEur": 149858.06693000006,
+          "pensionMediaEurMes": 439.78889781364654
+        },
+        "favorFamiliares": {
+          "numero": 44848,
+          "importeMilesEur": 28803.059650000032,
+          "pensionMediaEurMes": 642.2373271940785
+        }
+      }
+    },
+    {
+      "anyo": 2023,
+      "periodo": "31 diciembre",
+      "clases": {
+        "total": {
+          "numero": 10132479,
+          "importeMilesEur": 12156997.56927998,
+          "pensionMediaEurMes": 1199.8048620954437
+        },
+        "incapacidadPermanente": {
+          "numero": 945530,
+          "importeMilesEur": 1055452.11945,
+          "pensionMediaEurMes": 1116.2545021839605
+        },
+        "jubilacion": {
+          "numero": 6445599,
+          "importeMilesEur": 8891023.089219963,
+          "pensionMediaEurMes": 1379.3943882050316
+        },
+        "viudedad": {
+          "numero": 2354934,
+          "importeMilesEur": 2014835.1273499972,
+          "pensionMediaEurMes": 855.5802953925661
+        },
+        "orfandad": {
+          "numero": 340778,
+          "importeMilesEur": 163451.41540999996,
+          "pensionMediaEurMes": 479.6419235103204
+        },
+        "favorFamiliares": {
+          "numero": 45638,
+          "importeMilesEur": 32235.817849999978,
+          "pensionMediaEurMes": 706.3372156974447
+        }
+      }
+    },
+    {
+      "anyo": 2024,
+      "periodo": "31 diciembre",
+      "clases": {
+        "total": {
+          "numero": 10294786,
+          "importeMilesEur": 13001852.359370012,
+          "pensionMediaEurMes": 1262.9550880775969
+        },
+        "incapacidadPermanente": {
+          "numero": 999797,
+          "importeMilesEur": 1166128.6900099977,
+          "pensionMediaEurMes": 1166.365462198824
+        },
+        "jubilacion": {
+          "numero": 6558073,
+          "importeMilesEur": 9515209.73000999,
+          "pensionMediaEurMes": 1450.9154945377995
+        },
+        "viudedad": {
+          "numero": 2351632,
+          "importeMilesEur": 2115210.24726,
+          "pensionMediaEurMes": 899.4648173098512
+        },
+        "orfandad": {
+          "numero": 338996,
+          "importeMilesEur": 170738.74419999993,
+          "pensionMediaEurMes": 503.6600555758768
+        },
+        "favorFamiliares": {
+          "numero": 46288,
+          "importeMilesEur": 34564.947890000025,
+          "pensionMediaEurMes": 746.7366896387838
+        }
+      }
+    },
+    {
+      "anyo": 2025,
+      "periodo": "31 diciembre",
+      "clases": {
+        "total": {
+          "numero": 10452674,
+          "importeMilesEur": 13785627.952329969,
+          "pensionMediaEurMes": 1318.8613700503784
+        },
+        "incapacidadPermanente": {
+          "numero": 1053843,
+          "importeMilesEur": 1276523.7202999988,
+          "pensionMediaEurMes": 1211.3035056455267
+        },
+        "jubilacion": {
+          "numero": 6666863,
+          "importeMilesEur": 10092754.238450008,
+          "pensionMediaEurMes": 1513.8685523386348
+        },
+        "viudedad": {
+          "numero": 2348590,
+          "importeMilesEur": 2202201.780839999,
+          "pensionMediaEurMes": 937.6697426285555
+        },
+        "orfandad": {
+          "numero": 336536,
+          "importeMilesEur": 177361.28459999998,
+          "pensionMediaEurMes": 527.020243302351
+        },
+        "favorFamiliares": {
+          "numero": 46842,
+          "importeMilesEur": 36786.92813999996,
+          "pensionMediaEurMes": 785.340680158831
+        }
+      }
+    },
+    {
+      "anyo": 2026,
+      "periodo": "1 enero",
+      "clases": {
+        "total": {
+          "numero": 10452674,
+          "importeMilesEur": 14250714.013650022,
+          "pensionMediaEurMes": 1363.3558277671361
+        },
+        "incapacidadPermanente": {
+          "numero": 1053843,
+          "importeMilesEur": 1320656.665249998,
+          "pensionMediaEurMes": 1253.1816079340074
+        },
+        "jubilacion": {
+          "numero": 6666863,
+          "importeMilesEur": 10424049.110840002,
+          "pensionMediaEurMes": 1563.561319745134
+        },
+        "viudedad": {
+          "numero": 2348590,
+          "importeMilesEur": 2282619.1154399975,
+          "pensionMediaEurMes": 971.9104294236106
+        },
+        "orfandad": {
+          "numero": 336536,
+          "importeMilesEur": 185058.58127000005,
+          "pensionMediaEurMes": 549.8923778436781
+        },
+        "favorFamiliares": {
+          "numero": 46842,
+          "importeMilesEur": 38330.540850000034,
+          "pensionMediaEurMes": 818.2942839759197
+        }
+      }
+    },
+    {
+      "anyo": 2026,
+      "periodo": "1 febrero",
+      "clases": {
+        "total": {
+          "numero": 10446888,
+          "importeMilesEur": 14272490.399180016,
+          "pensionMediaEurMes": 1366.1954066301864
+        },
+        "incapacidadPermanente": {
+          "numero": 1055274,
+          "importeMilesEur": 1322864.0319299954,
+          "pensionMediaEurMes": 1253.5739835625584
+        },
+        "jubilacion": {
+          "numero": 6670447,
+          "importeMilesEur": 10451305.58802001,
+          "pensionMediaEurMes": 1566.8073800781283
+        },
+        "viudedad": {
+          "numero": 2339414,
+          "importeMilesEur": 2275752.39748999,
+          "pensionMediaEurMes": 972.78737217525
+        },
+        "orfandad": {
+          "numero": 335157,
+          "importeMilesEur": 184384.94614,
+          "pensionMediaEurMes": 550.1449951515259
+        },
+        "favorFamiliares": {
+          "numero": 46596,
+          "importeMilesEur": 38183.43560000005,
+          "pensionMediaEurMes": 819.4573697313084
+        }
+      }
+    },
+    {
+      "anyo": 2026,
+      "periodo": "1 marzo",
+      "clases": {
+        "total": {
+          "numero": 10463537,
+          "importeMilesEur": 14307664.784710022,
+          "pensionMediaEurMes": 1367.3832074861514
+        },
+        "incapacidadPermanente": {
+          "numero": 1060220,
+          "importeMilesEur": 1329844.2885199948,
+          "pensionMediaEurMes": 1254.3097550696975
+        },
+        "jubilacion": {
+          "numero": 6678169,
+          "importeMilesEur": 10474413.784070015,
+          "pensionMediaEurMes": 1568.4559321679362
+        },
+        "viudedad": {
+          "numero": 2342783,
+          "importeMilesEur": 2280396.6174499867,
+          "pensionMediaEurMes": 973.3708232687308
+        },
+        "orfandad": {
+          "numero": 335681,
+          "importeMilesEur": 184699.66396,
+          "pensionMediaEurMes": 550.2237658967889
+        },
+        "favorFamiliares": {
+          "numero": 46684,
+          "importeMilesEur": 38310.43071000003,
+          "pensionMediaEurMes": 820.6329943877995
+        }
+      }
+    },
+    {
+      "anyo": 2026,
+      "periodo": "1 abril",
+      "clases": {
+        "total": {
+          "numero": 10476332,
+          "importeMilesEur": 14336235.196500028,
+          "pensionMediaEurMes": 1368.4403278265738
+        },
+        "incapacidadPermanente": {
+          "numero": 1061553,
+          "importeMilesEur": 1331621.9891499968,
+          "pensionMediaEurMes": 1254.409331564224
+        },
+        "jubilacion": {
+          "numero": 6688655,
+          "importeMilesEur": 10499212.069560034,
+          "pensionMediaEurMes": 1569.7045324598196
+        },
+        "viudedad": {
+          "numero": 2343215,
+          "importeMilesEur": 2281932.5919899927,
+          "pensionMediaEurMes": 973.8468693611097
+        },
+        "orfandad": {
+          "numero": 336141,
+          "importeMilesEur": 185031.27960000004,
+          "pensionMediaEurMes": 550.4573366533688
+        },
+        "favorFamiliares": {
+          "numero": 46768,
+          "importeMilesEur": 38437.26619999996,
+          "pensionMediaEurMes": 821.8710699623665
+        }
+      }
+    },
+    {
+      "anyo": 2026,
+      "periodo": "1 mayo",
+      "clases": {
+        "total": {
+          "numero": 10480593,
+          "importeMilesEur": 14365845.482860018,
+          "pensionMediaEurMes": 1370.7092225468557
+        },
+        "incapacidadPermanente": {
+          "numero": 1056872,
+          "importeMilesEur": 1326085.6555099953,
+          "pensionMediaEurMes": 1254.726831167819
+        },
+        "jubilacion": {
+          "numero": 6700411,
+          "importeMilesEur": 10533092.32266003,
+          "pensionMediaEurMes": 1572.0068996752632
+        },
+        "viudedad": {
+          "numero": 2341362,
+          "importeMilesEur": 2283118.660519992,
+          "pensionMediaEurMes": 975.1241629957229
+        },
+        "orfandad": {
+          "numero": 335154,
+          "importeMilesEur": 185042.88758999997,
+          "pensionMediaEurMes": 552.1130214468571
+        },
+        "favorFamiliares": {
+          "numero": 46794,
+          "importeMilesEur": 38505.95658,
+          "pensionMediaEurMes": 822.8823477368893
+        }
+      }
+    },
+    {
+      "anyo": 2026,
+      "periodo": "1 junio",
+      "clases": {
+        "total": {
+          "numero": 10498828,
+          "importeMilesEur": 14397518.82041003,
+          "pensionMediaEurMes": 1371.3453368709374
+        },
+        "incapacidadPermanente": {
+          "numero": 1059235,
+          "importeMilesEur": 1329056.9629599953,
+          "pensionMediaEurMes": 1254.7328618861682
+        },
+        "jubilacion": {
+          "numero": 6713530,
+          "importeMilesEur": 10558846.218360022,
+          "pensionMediaEurMes": 1572.771138039157
+        },
+        "viudedad": {
+          "numero": 2343382,
+          "importeMilesEur": 2285635.4819899886,
+          "pensionMediaEurMes": 975.357616466282
+        },
+        "orfandad": {
+          "numero": 335849,
+          "importeMilesEur": 185408.76989000023,
+          "pensionMediaEurMes": 552.0599135027951
+        },
+        "favorFamiliares": {
+          "numero": 46832,
+          "importeMilesEur": 38571.387210000015,
+          "pensionMediaEurMes": 823.6117870259654
+        }
+      }
+    },
+    {
+      "anyo": 2026,
+      "periodo": "1 julio",
+      "clases": {
+        "total": {
+          "numero": 10517634,
+          "importeMilesEur": 14431901.149950016,
+          "pensionMediaEurMes": 1372.16232756816
+        },
+        "incapacidadPermanente": {
+          "numero": 1060553,
+          "importeMilesEur": 1330585.7035799946,
+          "pensionMediaEurMes": 1254.6150014002078
+        },
+        "jubilacion": {
+          "numero": 6729107,
+          "importeMilesEur": 10589269.813969992,
+          "pensionMediaEurMes": 1573.6515727822416
+        },
+        "viudedad": {
+          "numero": 2344785,
+          "importeMilesEur": 2287716.3609699896,
+          "pensionMediaEurMes": 975.6614619122819
+        },
+        "orfandad": {
+          "numero": 336294,
+          "importeMilesEur": 185663.91438000035,
+          "pensionMediaEurMes": 552.0880966654188
+        },
+        "favorFamiliares": {
+          "numero": 46895,
+          "importeMilesEur": 38665.35705,
+          "pensionMediaEurMes": 824.5091598251412
+        }
+      }
+    },
+    {
+      "anyo": 2026,
+      "periodo": "1 agosto",
+      "clases": {
+        "total": {
+          "numero": 10535869,
+          "importeMilesEur": 14470406.775890037,
+          "pensionMediaEurMes": 1373.4421694015025
+        },
+        "incapacidadPermanente": {
+          "numero": 1060808,
+          "importeMilesEur": 1331376.140069994,
+          "pensionMediaEurMes": 1255.0585403484833
+        },
+        "jubilacion": {
+          "numero": 6746923,
+          "importeMilesEur": 10625958.443030018,
+          "pensionMediaEurMes": 1574.934002215531
+        },
+        "viudedad": {
+          "numero": 2344874,
+          "importeMilesEur": 2288613.097599994,
+          "pensionMediaEurMes": 976.00685478196
+        },
+        "orfandad": {
+          "numero": 336336,
+          "importeMilesEur": 185735.93144999986,
+          "pensionMediaEurMes": 552.2332769908659
+        },
+        "favorFamiliares": {
+          "numero": 46928,
+          "importeMilesEur": 38723.16374000002,
+          "pensionMediaEurMes": 825.1611775485854
+        }
+      }
+    },
+    {
+      "anyo": 2026,
+      "periodo": "1 septiembre",
+      "clases": {
+        "total": {
+          "numero": 10547417,
+          "importeMilesEur": 14498177.663490051,
+          "pensionMediaEurMes": 1374.57139160138
+        },
+        "incapacidadPermanente": {
+          "numero": 1060551,
+          "importeMilesEur": 1330878.096469995,
+          "pensionMediaEurMes": 1254.8930664060426
+        },
+        "jubilacion": {
+          "numero": 6760137,
+          "importeMilesEur": 10654635.466020001,
+          "pensionMediaEurMes": 1576.0975651854394
+        },
+        "viudedad": {
+          "numero": 2343844,
+          "importeMilesEur": 2288352.5222299933,
+          "pensionMediaEurMes": 976.3245856934136
+        },
+        "orfandad": {
+          "numero": 335900,
+          "importeMilesEur": 185541.40254999985,
+          "pensionMediaEurMes": 552.3709513247986
+        },
+        "favorFamiliares": {
+          "numero": 46985,
+          "importeMilesEur": 38770.17621999998,
+          "pensionMediaEurMes": 825.1607155475147
+        }
+      }
+    }
+  ],
+  "porRegimen": {
+    "totalSistema": {
+      "etiqueta": "Total sistema",
+      "total": {
+        "numero": 10547417,
+        "importeEur": 14498177663.489996,
+        "pensionMediaEurMes": 1374.5713916013747
+      },
+      "incapacidadPermanente": {
+        "numero": 1060551,
+        "importeEur": 1330878096.4699998,
+        "pensionMediaEurMes": 1254.8930664060472
+      },
+      "jubilacion": {
+        "numero": 6760137,
+        "importeEur": 10654635466.019995,
+        "pensionMediaEurMes": 1576.0975651854385
+      },
+      "viudedad": {
+        "numero": 2343844,
+        "importeEur": 2288352522.2299995,
+        "pensionMediaEurMes": 976.3245856934162
+      },
+      "orfandad": {
+        "numero": 335900,
+        "importeEur": 185541402.55000004,
+        "pensionMediaEurMes": 552.3709513247992
+      },
+      "favorFamiliares": {
+        "numero": 46985,
+        "importeEur": 38770176.220000006,
+        "pensionMediaEurMes": 825.1607155475153
+      }
+    },
+    "general": {
+      "etiqueta": "General",
+      "total": {
+        "numero": 7941381,
+        "importeEur": 11839123732.099997,
+        "pensionMediaEurMes": 1490.8142213677945
+      },
+      "incapacidadPermanente": {
+        "numero": 822306,
+        "importeEur": 1048532694.7199998,
+        "pensionMediaEurMes": 1275.1125429219776
+      },
+      "jubilacion": {
+        "numero": 5073725,
+        "importeEur": 8801152385.969997,
+        "pensionMediaEurMes": 1734.6530184371438
+      },
+      "viudedad": {
+        "numero": 1751907,
+        "importeEur": 1813057156.229999,
+        "pensionMediaEurMes": 1034.9049100380323
+      },
+      "orfandad": {
+        "numero": 258723,
+        "importeEur": 146637358.39000002,
+        "pensionMediaEurMes": 566.7735701503152
+      },
+      "favorFamiliares": {
+        "numero": 34720,
+        "importeEur": 29744136.79,
+        "pensionMediaEurMes": 856.685967453917
+      }
+    },
+    "autonomos": {
+      "etiqueta": "Trabajadores autónomos",
+      "total": {
+        "numero": 2025155,
+        "importeEur": 1940935789.1899998,
+        "pensionMediaEurMes": 958.4134494347345
+      },
+      "incapacidadPermanente": {
+        "numero": 122954,
+        "importeEur": 120017324.01000002,
+        "pensionMediaEurMes": 976.1156530897736
+      },
+      "jubilacion": {
+        "numero": 1367397,
+        "importeEur": 1453220310.1299996,
+        "pensionMediaEurMes": 1062.764003526408
+      },
+      "viudedad": {
+        "numero": 464880,
+        "importeEur": 333833804.0900001,
+        "pensionMediaEurMes": 718.1074773920153
+      },
+      "orfandad": {
+        "numero": 60256,
+        "importeEur": 27657650.75,
+        "pensionMediaEurMes": 459.00243544211366
+      },
+      "favorFamiliares": {
+        "numero": 9668,
+        "importeEur": 6206700.209999999,
+        "pensionMediaEurMes": 641.9838860157219
+      }
+    },
+    "mar": {
+      "etiqueta": "Trabajadores del mar",
+      "total": {
+        "numero": 113834,
+        "importeEur": 159883489.71,
+        "pensionMediaEurMes": 1404.5319474849343
+      },
+      "incapacidadPermanente": {
+        "numero": 7146,
+        "importeEur": 9240847.870000001,
+        "pensionMediaEurMes": 1293.1497159249932
+      },
+      "jubilacion": {
+        "numero": 62782,
+        "importeEur": 109312820.80999999,
+        "pensionMediaEurMes": 1741.1490683635434
+      },
+      "viudedad": {
+        "numero": 37980,
+        "importeEur": 37006628.29999999,
+        "pensionMediaEurMes": 974.3714665613478
+      },
+      "orfandad": {
+        "numero": 4599,
+        "importeEur": 3163648.269999999,
+        "pensionMediaEurMes": 687.8991672102629
+      },
+      "favorFamiliares": {
+        "numero": 1327,
+        "importeEur": 1159544.46,
+        "pensionMediaEurMes": 873.8089374529012
+      }
+    },
+    "carbon": {
+      "etiqueta": "Minería del carbón",
+      "total": {
+        "numero": 55415,
+        "importeEur": 132000962.88000001,
+        "pensionMediaEurMes": 2382.0439029143736
+      },
+      "incapacidadPermanente": {
+        "numero": 1494,
+        "importeEur": 3124202.190000001,
+        "pensionMediaEurMes": 2091.1661244979928
+      },
+      "jubilacion": {
+        "numero": 32908,
+        "importeEur": 98911636.05000003,
+        "pensionMediaEurMes": 3005.701836939347
+      },
+      "viudedad": {
+        "numero": 18565,
+        "importeEur": 27218437.38,
+        "pensionMediaEurMes": 1466.115668192836
+      },
+      "orfandad": {
+        "numero": 1767,
+        "importeEur": 1845497.49,
+        "pensionMediaEurMes": 1044.4241595925298
+      },
+      "favorFamiliares": {
+        "numero": 681,
+        "importeEur": 901189.7699999999,
+        "pensionMediaEurMes": 1323.3329955947136
+      }
+    },
+    "accidentesTrabajo": {
+      "etiqueta": "Accidentes de trabajo",
+      "total": {
+        "numero": 203291,
+        "importeEur": 280197348.04,
+        "pensionMediaEurMes": 1378.3067033956252
+      },
+      "incapacidadPermanente": {
+        "numero": 92529,
+        "importeEur": 132002760.72,
+        "pensionMediaEurMes": 1426.6096112570112
+      },
+      "jubilacion": {
+        "numero": 52656,
+        "importeEur": 85919499.96,
+        "pensionMediaEurMes": 1631.7133842297173
+      },
+      "viudedad": {
+        "numero": 48089,
+        "importeEur": 56572588.45999999,
+        "pensionMediaEurMes": 1176.4143246896379
+      },
+      "orfandad": {
+        "numero": 9614,
+        "importeEur": 5240476.11,
+        "pensionMediaEurMes": 545.0880081131684
+      },
+      "favorFamiliares": {
+        "numero": 403,
+        "importeEur": 462022.7900000001,
+        "pensionMediaEurMes": 1146.458535980149
+      }
+    },
+    "enfermedadesProfesionales": {
+      "etiqueta": "Enfermedades profesionales",
+      "total": {
+        "numero": 31049,
+        "importeEur": 50004141.47999998,
+        "pensionMediaEurMes": 1610.4912068021508
+      },
+      "incapacidadPermanente": {
+        "numero": 12495,
+        "importeEur": 17038243.13,
+        "pensionMediaEurMes": 1363.6048923569426
+      },
+      "jubilacion": {
+        "numero": 9595,
+        "importeEur": 19258980.929999992,
+        "pensionMediaEurMes": 2007.1892579468465
+      },
+      "viudedad": {
+        "numero": 7832,
+        "importeEur": 12413563.679999992,
+        "pensionMediaEurMes": 1584.9800408580174
+      },
+      "orfandad": {
+        "numero": 941,
+        "importeEur": 996771.54,
+        "pensionMediaEurMes": 1059.2683740701382
+      },
+      "favorFamiliares": {
+        "numero": 186,
+        "importeEur": 296582.19999999995,
+        "pensionMediaEurMes": 1594.527956989247
+      }
+    },
+    "sovi": {
+      "etiqueta": "SOVI",
+      "total": {
+        "numero": 177292,
+        "importeEur": 96032200.08999997,
+        "pensionMediaEurMes": 541.6612147756242
+      },
+      "incapacidadPermanente": {
+        "numero": 1627,
+        "importeEur": 922023.83,
+        "pensionMediaEurMes": 566.7018008604794
+      },
+      "jubilacion": {
+        "numero": 161074,
+        "importeEur": 86859832.16999999,
+        "pensionMediaEurMes": 539.2542071966922
+      },
+      "viudedad": {
+        "numero": 14591,
+        "importeEur": 8250344.089999996,
+        "pensionMediaEurMes": 565.4406202453565
+      },
+      "orfandad": {
+        "numero": null,
+        "importeEur": null,
+        "pensionMediaEurMes": null
+      },
+      "favorFamiliares": {
+        "numero": null,
+        "importeEur": null,
+        "pensionMediaEurMes": null
+      }
+    }
+  },
+  "descomposicionNomina": {
+    "totalMillonesEur": 14498.17766349,
+    "pensionInicial": 10023.27379014,
+    "revalorizacion": 3462.1756173099993,
+    "complementoMinimos": 710.5037161899999,
+    "otrosComplementos": 302.22453985000004
+  },
+  "nominaPorSexo": {
+    "ambos": {
+      "totalMillonesEur": 14498.17766349
+    },
+    "hombres": {
+      "totalMillonesEur": 8151.599195399999
+    },
+    "mujeres": {
+      "totalMillonesEur": 6346.5442477199995
+    }
+  }
+}

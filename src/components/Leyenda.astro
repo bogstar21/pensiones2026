@@ -1,0 +1,49 @@
+---
+interface Props {
+  entradas: { etiqueta: string; slot?: 1 | 2 | 3 | 4 | 5; tono?: 'neutro'; forma?: 'linea' | 'bloque' | 'trazo' }[];
+}
+const { entradas } = Astro.props;
+---
+<ul class="leyenda">
+  {entradas.map((e) => (
+    <li>
+      <span
+        class:list={['leyenda__m', `leyenda__m--${e.forma ?? 'bloque'}`, e.tono === 'neutro' ? 'leyenda__m--neutro' : `leyenda__s${e.slot}`]}
+      ></span>
+      {e.etiqueta}
+    </li>
+  ))}
+</ul>
+<style>
+  .leyenda {
+    list-style: none;
+    margin: 0.85rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.1rem;
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    color: var(--ink-2);
+  }
+  .leyenda li { display: inline-flex; align-items: center; gap: 0.42rem; }
+  .leyenda__m { flex: none; }
+  .leyenda__m--bloque { width: 0.62rem; height: 0.62rem; border-radius: 1px; }
+  .leyenda__m--linea { width: 1.05rem; height: 2px; border-radius: 1px; }
+  .leyenda__m--trazo {
+    width: 1.05rem; height: 0;
+    border-top: 2px dashed currentColor;
+  }
+  .leyenda__s1 { background: var(--s1); color: var(--s1); }
+  .leyenda__s2 { background: var(--s2); color: var(--s2); }
+  .leyenda__s3 { background: var(--s3); color: var(--s3); }
+  .leyenda__s4 { background: var(--s4); color: var(--s4); }
+  .leyenda__s5 { background: var(--s5); color: var(--s5); }
+  .leyenda__m--neutro { background: var(--rule-strong); color: var(--rule-strong); }
+  .leyenda__m--trazo.leyenda__s1,
+  .leyenda__m--trazo.leyenda__s2,
+  .leyenda__m--trazo.leyenda__s3,
+  .leyenda__m--trazo.leyenda__s4,
+  .leyenda__m--trazo.leyenda__s5,
+  .leyenda__m--trazo.leyenda__m--neutro { background: none; }
+</style>

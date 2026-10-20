@@ -1,0 +1,25 @@
+{
+  "name": "pensiones-espana",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Analisis con datos oficiales del sistema publico de pensiones en Espana",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "start": "sirv dist --port ${PORT:-4321} --host 0.0.0.0 --single --quiet",
+    "check": "astro check",
+    "datos": "node scripts/fetch-data.mjs"
+  },
+  "dependencies": {
+    "astro": "^5.6.1",
+    "sirv-cli": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

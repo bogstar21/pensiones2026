@@ -1,0 +1,107 @@
+---
+/** Barras horizontales ordenadas. Una sola tinta: la barra que importa se
+ *  destaca y el resto queda en gris, en vez de gastar color por fila. */
+interface Props {
+  filas: { etiqueta: string; valor: number; destacada?: boolean }[];
+  formato?: 'pct' | 'entero' | 'decimal';
+  /** Referencias verticales, p. ej. la media de la UE. */
+  referencias?: { valor: number; etiqueta: string }[];
+  slotDestacada?: 1 | 2 | 3 | 4 | 5;
+}
+const { filas, formato = 'pct', referencias = [], slotDestacada = 2 } = Astro.props;
+
+const n = (v: number, d = 0) => v.toLocaleString('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmt = (v: number) => (formato === 'pct' ? `${n(v, 1)} %` : formato === 'decimal' ? n(v, 1) : n(v));
+
+const max = Math.max(...filas.map((f) => f.valor), ...referencias.map((r) => r.valor));
+const ancho = (v: number) => (v / max) * 100;
+---
+<div class="rk">
+  {referencias.map((r) => (
+    <div class="rk__ref" style={`--pos:${ancho(r.valor)}%`}>
+      <span class="rk__ref-et num">{r.etiqueta} {fmt(r.valor)}</span>
+    </div>
+  ))}
+  <ol class="rk__lista">
+    {filas.map((f) => (
+      <li class:list={['rk__fila', f.destacada && 'rk__fila--on']}>
+        <span class="rk__et">{f.etiqueta}</span>
+        <span class="rk__pista">
+          <span
+            class:list={['rk__barra', f.destacada && `rk__barra--s${slotDestacada}`]}
+            style={`width:${ancho(f.valor)}%`}
+          ></span>
+        </span>
+        <span class="rk__val num">{fmt(f.valor)}</span>
+      </li>
+    ))}
+  </ol>
+</div>
+<style>
+  /* La pista de barras y la linea de referencia comparten estas medidas, para
+     que la referencia caiga exactamente sobre la escala y no "a ojo". */
+  .rk {
+    position: relative;
+    padding-top: 1.5rem;
+    font-family: var(--sans);
+    --rk-et: 10rem;
+    --rk-val: 3.6rem;
+    --rk-gap: 0.7rem;
+  }
+  .rk__lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+
+  .rk__fila {
+    display: grid;
+    grid-template-columns: var(--rk-et) 1fr var(--rk-val);
+    align-items: center;
+    gap: var(--rk-gap);
+    font-size: 0.8rem;
+  }
+  .rk__et { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rk__fila--on .rk__et { color: var(--ink); font-weight: 600; }
+
+  .rk__pista { position: relative; height: 0.72rem; }
+  .rk__barra {
+    position: absolute; inset-block: 0; left: 0;
+    background: var(--rule-strong);
+    border-radius: 0 3px 3px 0;
+    min-width: 2px;
+  }
+  .rk__barra--s1 { background: var(--s1); }
+  .rk__barra--s2 { background: var(--s2); }
+  .rk__barra--s3 { background: var(--s3); }
+  .rk__barra--s4 { background: var(--s4); }
+  .rk__barra--s5 { background: var(--s5); }
+
+  .rk__val { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-3); font-size: 0.76rem; }
+  .rk__fila--on .rk__val { color: var(--ink); font-weight: 600; }
+
+  .rk__ref {
+    position: absolute;
+    top: 1.5rem;
+    bottom: 0;
+    left: calc(var(--rk-et) + var(--rk-gap));
+    right: calc(var(--rk-val) + var(--rk-gap));
+    pointer-events: none;
+  }
+  .rk__ref::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0; left: var(--pos);
+    border-left: 1px solid var(--ink-3);
+  }
+  .rk__ref-et {
+    position: absolute;
+    left: var(--pos);
+    top: -1.35rem;
+    transform: translateX(-50%);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+  @media (max-width: 46rem) {
+    .rk { --rk-et: 6.2rem; --rk-val: 3.2rem; --rk-gap: 0.5rem; }
+    .rk__fila { font-size: 0.73rem; }
+  }
+</style>

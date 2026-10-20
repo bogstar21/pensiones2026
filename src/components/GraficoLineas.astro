@@ -1,0 +1,254 @@
+---
+/** Lineas en el tiempo. Hasta cinco series, con etiqueta directa al final de
+ *  cada trazo y capa de hover con mira y tarjeta de valores. */
+import { escala, marcas, camino, caminoArea, dominioAmable, type Serie } from '../lib/chart';
+
+interface Props {
+  series: Serie[];
+  /** Formato del valor en el eje y en la tarjeta. */
+  formato: 'pct' | 'miles' | 'millones' | 'eur' | 'entero';
+  /** Dibuja el area bajo la primera serie (solo tiene sentido con una serie). */
+  area?: boolean;
+  desdeCero?: boolean;
+  alto?: number;
+  /** Anotaciones verticales: { x, texto }. */
+  hitos?: { x: number; texto: string }[];
+  /** Ano desde el que los datos son proyeccion, no observacion. */
+  desdeProyeccion?: number;
+  etiquetaX?: string;
+  /** Ids de las series que llevan etiqueta al final del trazo. Por defecto,
+   *  todas. Solo tiene sentido etiquetar las que terminan a la derecha. */
+  etiquetar?: string[];
+}
+
+const {
+  series, formato, area = false, desdeCero = false, alto = 360,
+  hitos = [], desdeProyeccion, etiquetaX, etiquetar,
+} = Astro.props;
+const llevaEtiqueta = (id: string) => (etiquetar ? etiquetar.includes(id) : true);
+/** El rotulo final no puede desbordar el margen: la leyenda lleva el nombre
+ *  completo, aqui basta con lo justo para identificar el trazo. */
+const MAX_ROTULO = 18;
+const rotulo = (t: string) => (t.length > MAX_ROTULO ? `${t.slice(0, MAX_ROTULO - 1)}…` : t);
+
+const W = 760;
+const H = alto;
+const M = { top: 14, right: 124, bottom: 30, left: 48 };
+
+const todosY = series.flatMap((s) => s.puntos.map((p) => p.y)).filter((v): v is number => v != null);
+const todosX = series.flatMap((s) => s.puntos.map((p) => p.x));
+
+const domY = dominioAmable(todosY, 5, desdeCero || area);
+const domX: [number, number] = [Math.min(...todosX), Math.max(...todosX)];
+
+const ex = escala(domX, [M.left, W - M.right]);
+const ey = escala(domY, [H - M.bottom, M.top]);
+
+const ticksY = marcas(domY, 5);
+const ticksX = marcas(domX, 6).filter((t) => Number.isInteger(t) && t >= domX[0] && t <= domX[1]);
+
+const fmt = (v: number) => {
+  const n = (x: number, d = 0) => x.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+  if (formato === 'pct') return `${n(v, 1)} %`;
+  if (formato === 'miles') return n(Math.round(v));
+  if (formato === 'millones') return `${n(v / 1e6, 2)} M`;
+  if (formato === 'eur') return `${n(Math.round(v))} €`;
+  return n(Math.round(v));
+};
+const fmtEje = (v: number) => {
+  const n = (x: number, d = 0) => x.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+  if (formato === 'pct') return n(v, v % 1 === 0 ? 0 : 1);
+  if (formato === 'millones') return n(v / 1e6, 1);
+  if (formato === 'eur') return n(v);
+  if (formato === 'miles' || formato === 'entero') {
+    if (v === 0) return '0';
+    if (Math.abs(v) >= 1000) return `${n(v / 1000, Math.abs(v) % 1000 === 0 ? 0 : 1)}k`;
+    return n(v);
+  }
+  return n(v);
+};
+
+/** Ultimo punto con valor, para la etiqueta directa. */
+const finales = series.map((s) => {
+  if (!llevaEtiqueta(s.id)) return null;
+  const vivos = s.puntos.filter((p) => p.y != null) as { x: number; y: number }[];
+  return vivos.length ? { serie: s, punto: vivos.at(-1)! } : null;
+});
+
+// Separamos verticalmente las etiquetas finales que se solapan.
+const colocadas = finales
+  .filter((f): f is NonNullable<typeof f> => f != null)
+  .map((f) => ({ ...f, y: ey(f.punto.y) }))
+  .sort((a, b) => a.y - b.y);
+const MINIMO = 30;   // nombre + valor, dos lineas
+for (let i = 1; i < colocadas.length; i++) {
+  if (colocadas[i].y - colocadas[i - 1].y < MINIMO) colocadas[i].y = colocadas[i - 1].y + MINIMO;
+}
+
+const datosHover = {
+  xs: [...new Set(todosX)].sort((a, b) => a - b),
+  plot: { x0: M.left, x1: W - M.right, y0: M.top, y1: H - M.bottom },
+  dom: { x0: domX[0], x1: domX[1] },
+  formato,
+  series: series.map((s) => ({
+    etiqueta: s.etiqueta,
+    slot: s.slot,
+    puntos: s.puntos.map((p) => ({ x: p.x, y: p.y, cx: ex(p.x), cy: p.y == null ? null : ey(p.y) })),
+  })),
+};
+const xProy = desdeProyeccion != null ? ex(desdeProyeccion) : null;
+---
+
+<div class="gl" data-grafico={JSON.stringify(datosHover)}>
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" class="gl__svg" preserveAspectRatio="xMidYMid meet">
+    <title>{series.map((s) => s.etiqueta).join(', ')}</title>
+
+    {/* Zona de proyeccion: fondo apenas distinto, sin ruido */}
+    {xProy != null && (
+      <g>
+        <rect x={xProy} y={M.top} width={W - M.right - xProy} height={H - M.bottom - M.top} class="gl__proy-fondo" />
+        <line x1={xProy} x2={xProy} y1={M.top} y2={H - M.bottom} class="gl__proy-linea" />
+        <text x={xProy + 6} y={M.top + 11} class="gl__proy-txt">proyección</text>
+      </g>
+    )}
+
+    {/* Rejilla: lineas solidas de un tono por encima del fondo */}
+    <g aria-hidden="true">
+      {ticksY.map((t) => (
+        <line x1={M.left} x2={W - M.right} y1={ey(t)} y2={ey(t)} class="gl__grid" />
+      ))}
+    </g>
+
+    {/* Eje Y */}
+    <g aria-hidden="true">
+      {ticksY.map((t) => (
+        <text x={M.left - 9} y={ey(t) + 3.5} class="gl__eje gl__eje--y">{fmtEje(t)}</text>
+      ))}
+    </g>
+
+    {/* Eje X */}
+    <g aria-hidden="true">
+      <line x1={M.left} x2={W - M.right} y1={H - M.bottom} y2={H - M.bottom} class="gl__base" />
+      {ticksX.map((t) => (
+        <text x={ex(t)} y={H - M.bottom + 17} class="gl__eje gl__eje--x">{t}</text>
+      ))}
+      {etiquetaX && <text x={W - M.right} y={H - 2} class="gl__eje gl__eje--x" text-anchor="end">{etiquetaX}</text>}
+    </g>
+
+    {/* Hitos anotados */}
+    {hitos.map((h) => (
+      <g aria-hidden="true">
+        <line x1={ex(h.x)} x2={ex(h.x)} y1={M.top} y2={H - M.bottom} class="gl__hito" />
+        <text x={ex(h.x) + 5} y={M.top + 11} class="gl__hito-txt">{h.texto}</text>
+      </g>
+    ))}
+
+    {/* Area, solo para serie unica */}
+    {area && series[0] && (
+      <path d={caminoArea(series[0].puntos, ex, ey, ey(Math.max(domY[0], 0)))} class={`gl__area gl__s${series[0].slot}`} />
+    )}
+
+    {/* Trazos */}
+    {series.map((s) => (
+      <path
+        d={camino(s.puntos, ex, ey)}
+        class={`gl__linea gl__s${s.slot} ${s.trazo === 'proyeccion' ? 'gl__linea--proy' : ''}`}
+      />
+    ))}
+
+    {/* Etiqueta directa al final de cada trazo */}
+    {colocadas.map((c) => (
+      <g>
+        <circle cx={ex(c.punto.x)} cy={ey(c.punto.y)} r="3.2" class={`gl__fin gl__s${c.serie.slot}`} />
+        <text x={W - M.right + 10} y={c.y + 3.5} class={`gl__etq gl__s${c.serie.slot}`}>
+          {rotulo(c.serie.etiqueta)}
+        </text>
+        <text x={W - M.right + 10} y={c.y + 16} class="gl__etq-val">{fmt(c.punto.y)}</text>
+      </g>
+    ))}
+
+    {/* Capa de interaccion */}
+    <g class="gl__mira" aria-hidden="true" hidden>
+      <line y1={M.top} y2={H - M.bottom} class="gl__mira-linea" />
+    </g>
+    <rect
+      x={M.left} y={M.top}
+      width={W - M.right - M.left} height={H - M.bottom - M.top}
+      class="gl__captura"
+    />
+  </svg>
+  <div class="gl__tip" hidden></div>
+</div>
+
+<style>
+  .gl { position: relative; }
+  .gl__svg { width: 100%; height: auto; display: block; overflow: visible; font-family: var(--sans); }
+
+  .gl__grid { stroke: var(--grid); stroke-width: 1; }
+  .gl__base { stroke: var(--rule-strong); stroke-width: 1; }
+
+  .gl__eje { fill: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .gl__eje--y { text-anchor: end; }
+  .gl__eje--x { text-anchor: middle; }
+
+  .gl__linea { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .gl__linea--proy { stroke-dasharray: 5 4; }
+  .gl__area { opacity: 0.1; }
+
+  .gl__proy-fondo { fill: var(--ink); opacity: 0.028; }
+  .gl__proy-linea { stroke: var(--rule-strong); stroke-width: 1; }
+  .gl__proy-txt,
+  .gl__hito-txt { fill: var(--ink-3); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .gl__hito { stroke: var(--rule-strong); stroke-width: 1; }
+
+  .gl__etq { font-size: 12px; font-weight: 600; }
+  .gl__etq-val { fill: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+  /* El color es del trazo; los textos de valor llevan tinta, no color de serie. */
+  .gl__s1 { stroke: var(--s1); }
+  .gl__s2 { stroke: var(--s2); }
+  .gl__s3 { stroke: var(--s3); }
+  .gl__s4 { stroke: var(--s4); }
+  .gl__s5 { stroke: var(--s5); }
+  circle.gl__s1, text.gl__s1, path.gl__area.gl__s1 { fill: var(--s1); stroke: none; }
+  circle.gl__s2, text.gl__s2, path.gl__area.gl__s2 { fill: var(--s2); stroke: none; }
+  circle.gl__s3, text.gl__s3, path.gl__area.gl__s3 { fill: var(--s3); stroke: none; }
+  circle.gl__s4, text.gl__s4, path.gl__area.gl__s4 { fill: var(--s4); stroke: none; }
+  circle.gl__s5, text.gl__s5, path.gl__area.gl__s5 { fill: var(--s5); stroke: none; }
+
+  /* La regla [hidden]{display:none} del navegador solo cubre HTML, no SVG:
+     sin esto la mira y sus puntos se pintan en el origen al cargar. */
+  .gl__mira[hidden] { display: none; }
+
+  .gl__captura { fill: transparent; cursor: crosshair; }
+  .gl__mira-linea { stroke: var(--ink-3); stroke-width: 1; }
+  .gl__punto { stroke: var(--paper); stroke-width: 2; }
+
+  .gl__tip {
+    position: absolute;
+    z-index: 3;
+    min-width: 9rem;
+    padding: 0.55rem 0.7rem;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: 4px;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.1);
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    pointer-events: none;
+    transform: translate(-50%, -100%);
+  }
+
+  /* Por debajo de este ancho el grafico se encoge hasta volverse ilegible.
+     Se le da scroll propio: el que hace scroll es la caja, nunca la pagina. */
+  @media (max-width: 46rem) {
+    .gl {
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      padding-bottom: 0.4rem;
+    }
+    .gl__svg { min-width: 34rem; }
+    .gl__tip { display: none; }
+  }
+</style>

@@ -1,0 +1,85 @@
+---
+import { marcas } from '../lib/chart';
+
+/** Piramide de poblacion: hoy en relleno, el ano proyectado en contorno.
+ *  Un mismo eje para los dos sexos, espejado, con la escala en valor absoluto. */
+interface Props {
+  tramos: string[];
+  hombres: Record<string, Record<string, number>>;
+  mujeres: Record<string, Record<string, number>>;
+  anyoBase: number;
+  anyoProyectado: number;
+}
+const { tramos, hombres, mujeres, anyoBase, anyoProyectado } = Astro.props;
+
+const W = 760;
+const FILA = 15;
+const H = tramos.length * FILA + 42;
+const CENTRO_HUECO = 46;
+const MITAD = (W - CENTRO_HUECO) / 2;
+
+const valores = tramos.flatMap((t) => [
+  hombres[t]?.[anyoBase] ?? 0, hombres[t]?.[anyoProyectado] ?? 0,
+  mujeres[t]?.[anyoBase] ?? 0, mujeres[t]?.[anyoProyectado] ?? 0,
+]);
+const max = Math.max(...valores);
+// Un poco de aire por encima del maximo en vez de redondear al orden de
+// magnitud, que desperdiciaba un tercio del ancho disponible.
+const techo = max * 1.06;
+const ancho = (v: number) => (v / techo) * MITAD;
+
+const n = (v: number) =>
+  v >= 1e6 ? `${(v / 1e6).toLocaleString('de-DE', { maximumFractionDigits: 1 })} M`
+           : `${(v / 1000).toLocaleString('de-DE')}k`;
+// Marcas redondas que quepan: se descarta la que caeria pegada al borde.
+const ticks = marcas([0, techo], 3).filter((t) => t > 0 && ancho(t) <= MITAD - 14);
+
+const fila = (i: number) => 24 + i * FILA;
+---
+<div class="pr">
+  <svg viewBox={`0 0 ${W} ${H}`} class="pr__svg" role="img" preserveAspectRatio="xMidYMid meet">
+    <title>Pirámide de población de España en {anyoBase} y proyectada a {anyoProyectado}</title>
+
+    <text x={MITAD / 2} y="10" class="pr__sexo">Hombres</text>
+    <text x={MITAD + CENTRO_HUECO + MITAD / 2} y="10" class="pr__sexo">Mujeres</text>
+
+    {ticks.map((t) => (
+      <g aria-hidden="true">
+        <line x1={MITAD - ancho(t)} x2={MITAD - ancho(t)} y1="18" y2={H - 20} class="pr__grid" />
+        <line x1={MITAD + CENTRO_HUECO + ancho(t)} x2={MITAD + CENTRO_HUECO + ancho(t)} y1="18" y2={H - 20} class="pr__grid" />
+        <text x={MITAD - ancho(t)} y={H - 7} class="pr__eje">{n(t)}</text>
+        <text x={MITAD + CENTRO_HUECO + ancho(t)} y={H - 7} class="pr__eje">{n(t)}</text>
+      </g>
+    ))}
+
+    {tramos.map((t, i) => (
+      <g>
+        {/* Relleno: ano base */}
+        <rect x={MITAD - ancho(hombres[t]?.[anyoBase] ?? 0)} y={fila(i)} width={ancho(hombres[t]?.[anyoBase] ?? 0)} height={FILA - 2} class="pr__base pr__h" rx="1.5" />
+        <rect x={MITAD + CENTRO_HUECO} y={fila(i)} width={ancho(mujeres[t]?.[anyoBase] ?? 0)} height={FILA - 2} class="pr__base pr__m" rx="1.5" />
+        {/* Contorno: ano proyectado */}
+        <rect x={MITAD - ancho(hombres[t]?.[anyoProyectado] ?? 0)} y={fila(i) - 0.5} width={ancho(hombres[t]?.[anyoProyectado] ?? 0)} height={FILA - 1} class="pr__proy pr__h" rx="1.5" />
+        <rect x={MITAD + CENTRO_HUECO} y={fila(i) - 0.5} width={ancho(mujeres[t]?.[anyoProyectado] ?? 0)} height={FILA - 1} class="pr__proy pr__m" rx="1.5" />
+        <text x={MITAD + CENTRO_HUECO / 2} y={fila(i) + FILA / 2 + 1.5} class="pr__edad">{t}</text>
+      </g>
+    ))}
+  </svg>
+</div>
+<style>
+  .pr__svg { width: 100%; height: auto; display: block; font-family: var(--sans); }
+  @media (max-width: 46rem) {
+    .pr { overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 0.4rem; }
+    .pr__svg { min-width: 34rem; }
+  }
+  .pr__base { fill-opacity: 0.85; stroke: none; }
+  .pr__h { fill: var(--s1); stroke: var(--s1); }
+  .pr__m { fill: var(--s5); stroke: var(--s5); }
+  .pr__proy { fill: none; stroke-width: 1.4; }
+  .pr__grid { stroke: var(--grid); stroke-width: 1; }
+  .pr__eje { fill: var(--ink-3); font-size: 9.5px; text-anchor: middle; font-variant-numeric: tabular-nums; }
+  .pr__edad { fill: var(--ink-3); font-size: 9.5px; text-anchor: middle; font-variant-numeric: tabular-nums; }
+  .pr__sexo {
+    fill: var(--ink-3); font-size: 10px; text-anchor: middle;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+</style>

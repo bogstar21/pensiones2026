@@ -1,0 +1,60 @@
+---
+/** Barras que salen de un cero central: suben o bajan. Dos tintas opuestas
+ *  (fria y calida) y nada de color en el medio, que debe leerse como "nada". */
+interface Props {
+  filas: { etiqueta: string; valor: number; destacada?: boolean }[];
+  unidad?: string;
+  signoPositivo?: 'sube' | 'baja';
+}
+const { filas, unidad = '', signoPositivo = 'sube' } = Astro.props;
+
+// Signo menos tipografico (U+2212), no el guion del teclado: alinea con las
+// cifras tabulares y se lee como signo, no como separador.
+const n = (v: number, d = 1) =>
+  v.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d }).replace('-', '\u2212');
+const max = Math.max(...filas.map((f) => Math.abs(f.valor)));
+const pc = (v: number) => (Math.abs(v) / max) * 50;
+---
+<div class="dv" data-signo={signoPositivo}>
+  <ol class="dv__lista">
+    {filas.map((f) => (
+      <li class:list={['dv__fila', f.destacada && 'dv__fila--on']}>
+        <span class="dv__et">{f.etiqueta}</span>
+        <span class="dv__pista">
+          <span class="dv__cero" aria-hidden="true"></span>
+          <span
+            class:list={['dv__barra', f.valor >= 0 ? 'dv__barra--pos' : 'dv__barra--neg']}
+            style={f.valor >= 0 ? `left:50%;width:${pc(f.valor)}%` : `right:50%;width:${pc(f.valor)}%`}
+          ></span>
+        </span>
+        <span class="dv__val num">{f.valor > 0 ? '+' : ''}{n(f.valor)}{unidad}</span>
+      </li>
+    ))}
+  </ol>
+</div>
+<style>
+  .dv { font-family: var(--sans); }
+  .dv__lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+  .dv__fila {
+    display: grid;
+    grid-template-columns: minmax(7rem, 15rem) 1fr 4.2rem;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.8rem;
+  }
+  .dv__et { color: var(--ink-2); }
+  .dv__fila--on .dv__et { color: var(--ink); font-weight: 600; }
+  .dv__pista { position: relative; height: 0.72rem; }
+  .dv__cero {
+    position: absolute; left: 50%; top: -2px; bottom: -2px;
+    border-left: 1px solid var(--rule-strong);
+  }
+  .dv__barra { position: absolute; inset-block: 0; min-width: 2px; }
+  .dv__barra--pos { background: var(--s2); border-radius: 0 3px 3px 0; }
+  .dv__barra--neg { background: var(--s1); border-radius: 3px 0 0 3px; }
+  .dv__val { text-align: right; font-variant-numeric: tabular-nums; font-size: 0.76rem; color: var(--ink-2); }
+  .dv__fila--on .dv__val { color: var(--ink); font-weight: 600; }
+  @media (max-width: 34rem) {
+    .dv__fila { grid-template-columns: 6.5rem 1fr 3.6rem; gap: 0.5rem; font-size: 0.73rem; }
+  }
+</style>

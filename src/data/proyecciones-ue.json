@@ -1,0 +1,88 @@
+{
+  "fuente": {
+    "organismo": "Comisión Europea · Economic Policy Committee (Ageing Working Group)",
+    "publicacion": "2024 Ageing Report — Country fiche for Spain",
+    "url": "https://economy-finance.ec.europa.eu/document/download/392994f2-c025-4066-bea8-f65cf4bcd411_en?filename=2024-ageing-report-country-fiche-Spain.pdf",
+    "consultado": "2026-10-20",
+    "extraccion": "Transcrito de las tablas 10, 11, 12, 13, 14 y 20 de la ficha de país. Se conservan los valores publicados sin redondeo adicional.",
+    "nota": "Es la proyección oficial acordada entre la Comisión Europea y el Gobierno de España, y la que se usa en el marco fiscal europeo. Base 2022; incorpora ya la reforma de 2021-2023."
+  },
+  "anyos": [2022, 2030, 2040, 2050, 2060, 2070],
+  "gastoPensionesPib": {
+    "tabla": "Tabla 10",
+    "unidad": "% del PIB",
+    "series": {
+      "gastoPublicoBruto": [13.1, 14.3, 16.2, 17.3, 16.9, 16.7],
+      "gastoPublicoNeto": [12.0, 13.1, 14.8, 15.8, 15.4, 15.3],
+      "cotizacionesPublicas": [12.9, 13.8, 14.3, 14.6, 14.0, 14.0],
+      "saldoSistemaPublico": [-0.2, -0.5, -1.9, -2.7, -2.8, -2.7]
+    },
+    "pico": { "valor": 17.3, "anyo": 2051 },
+    "cambio2022a2070": 3.6
+  },
+  "gastoPorTipo": {
+    "tabla": "Tabla 11",
+    "unidad": "% del PIB",
+    "series": {
+      "jubilacionYAnticipada": [9.7, 11.0, 13.0, 14.3, 13.9, 13.8],
+      "incapacidad": [1.1, 1.0, 0.9, 0.8, 0.9, 0.9],
+      "supervivencia": [2.3, 2.3, 2.3, 2.2, 2.1, 2.0]
+    }
+  },
+  "descomposicion": {
+    "tabla": "Tabla 12",
+    "unidad": "puntos porcentuales de PIB",
+    "tramos": ["2022-2030", "2030-2040", "2040-2050", "2050-2060", "2060-2070", "2022-2070"],
+    "factores": {
+      "efectoDependencia": [2.4, 4.4, 3.4, 0.0, 0.1, 10.3],
+      "efectoCobertura": [-1.0, -0.6, 0.4, 0.8, 0.0, -0.4],
+      "efectoPensionMedia": [0.2, -0.9, -1.9, -1.4, -0.2, -4.1],
+      "efectoMercadoTrabajo": [-0.7, -0.8, -0.5, 0.2, -0.1, -1.9],
+      "residuo": [0.3, -0.3, -0.2, 0.0, 0.0, -0.2],
+      "total": [1.2, 1.9, 1.1, -0.4, -0.2, 3.6]
+    }
+  },
+  "generosidad": {
+    "tabla": "Tabla 13",
+    "unidad": "%",
+    "series": {
+      "ratioPrestacionPublica": [64, 69, 64, 56, 52, 51],
+      "ratioPrestacionJubilacion": [70, 76, 69, 60, 55, 54],
+      "tasaSustitucionAlJubilarse": [77, 76, 71, 65, 64, 64]
+    },
+    "cambio2022a2070": { "ratioPrestacionPublica": -13, "tasaSustitucionAlJubilarse": -13 }
+  },
+  "dependenciaSistema": {
+    "tabla": "Tabla 14",
+    "series": {
+      "pensionistasMiles": [9984, 11137, 13493, 15605, 15999, 15637],
+      "ocupadosMiles": [20581, 22119, 22208, 21311, 20671, 20099],
+      "ratioDependenciaSistemaPct": [49, 50, 61, 73, 77, 78],
+      "poblacion65masMiles": [9636, 11692, 14648, 16505, 16176, 15797],
+      "poblacion20a64Miles": [28933, 29332, 27853, 25848, 25295, 24501],
+      "ratioDependenciaDemograficaPct": [33, 40, 53, 64, 64, 64]
+    }
+  },
+  "escenarios": {
+    "tabla": "Tabla 20",
+    "unidad": "desviación en puntos de PIB respecto al escenario base, en 2070",
+    "base2070": 16.7,
+    "casos": [
+      { "nombre": "Mayor esperanza de vida (+2 años)", "desviacion2070": 0.8 },
+      { "nombre": "Más migración (+33%)", "desviacion2070": -1.0 },
+      { "nombre": "Menos migración (-33%)", "desviacion2070": 1.4 },
+      { "nombre": "Menos fecundidad (-20%)", "desviacion2070": 1.1 },
+      { "nombre": "Mayor empleo de los mayores (+10 pp)", "desviacion2070": -1.2 },
+      { "nombre": "Mayor productividad (PTF converge al 1%)", "desviacion2070": -0.6 },
+      { "nombre": "Menor productividad (PTF converge al 0,6%)", "desviacion2070": 1.0 },
+      { "nombre": "Política: ligar la edad de jubilación a la longevidad", "desviacion2070": -1.9 },
+      { "nombre": "Política: congelar la edad de jubilación", "desviacion2070": 2.1 },
+      { "nombre": "Política: mantener constante la generosidad", "desviacion2070": 2.3 }
+    ]
+  },
+  "demografiaSupuestos": {
+    "tabla": "Tabla 6",
+    "esperanzaVidaAlNacer": { "hombres": { "2022": 80.8, "2070": 87.1 }, "mujeres": { "2022": 86.5, "2070": 91.5 } },
+    "esperanzaVidaA67": { "hombres": { "2022": 17.9, "2070": 22.4 }, "mujeres": { "2022": 21.8, "2070": 25.8 } }
+  }
+}

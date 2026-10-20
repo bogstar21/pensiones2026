@@ -1,0 +1,1097 @@
+---
+import Base from '../layouts/Base.astro';
+import Figura from '../components/Figura.astro';
+import GraficoLineas from '../components/GraficoLineas.astro';
+import GraficoRanking from '../components/GraficoRanking.astro';
+import GraficoDivergente from '../components/GraficoDivergente.astro';
+import BarraApilada from '../components/BarraApilada.astro';
+import Piramide from '../components/Piramide.astro';
+import Leyenda from '../components/Leyenda.astro';
+import Cifra from '../components/Cifra.astro';
+
+import ss from '../data/generated/seguridad-social.json';
+import euro from '../data/generated/eurostat.json';
+import ine from '../data/generated/ine-proyecciones.json';
+import ue from '../data/proyecciones-ue.json';
+import ocde from '../data/comparativa-ocde.json';
+import sistema from '../data/sistema.json';
+import {
+  num, pct, meur, eur,
+  SNAPSHOT, PERIODO_SS, PIB, CLASES,
+  nominaAnualMillones, nominaSobrePib, afiliadosPorPension,
+  cuotaNominaMujeres, cuotaRevalorizacion, caidaNacimientos,
+  meurTexto, periodoTexto,
+} from '../data/calculos';
+import type { Serie } from '../lib/chart';
+
+/* ---------------------------------------------------- series para graficos */
+
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+/** La evolucion mezcla cierres de ano y meses de 2026: los llevamos a un eje decimal. */
+const xDe = (p: { anyo: number; periodo: string }) => {
+  const mes = MESES.findIndex((m) => p.periodo.includes(m));
+  return p.anyo + (p.periodo.includes('diciembre') && p.periodo.startsWith('31') ? 0.99 : mes / 12);
+};
+
+const SLOTS = [1, 2, 3, 4, 5] as const;
+const seriesPensionMedia: Serie[] = CLASES.map((c, i) => ({
+  id: c.clave,
+  etiqueta: c.etiqueta,
+  slot: SLOTS[i],
+  puntos: ss.evolucion.map((p) => ({
+    x: xDe(p),
+    y: (p.clases as Record<string, { pensionMediaEurMes: number | null }>)[c.clave]?.pensionMediaEurMes ?? null,
+  })),
+}));
+
+/* Gasto en pensiones sobre PIB: Espana frente a sus comparables (ESSPROS). */
+const PAISES_COMP = [
+  { cod: 'ES', etiqueta: 'España', slot: 2 as const },
+  { cod: 'IT', etiqueta: 'Italia', slot: 3 as const },
+  { cod: 'FR', etiqueta: 'Francia', slot: 4 as const },
+  { cod: 'DE', etiqueta: 'Alemania', slot: 5 as const },
+  { cod: 'EU27_2020', etiqueta: 'Media UE-27', slot: 1 as const },
+];
+const gastoPib: Record<string, { anyo: number; valor: number }[]> = euro.gastoPibPorPais;
+const seriesGastoPib: Serie[] = PAISES_COMP.map((p) => ({
+  id: p.cod,
+  etiqueta: p.etiqueta,
+  slot: p.slot,
+  puntos: (gastoPib[p.cod] ?? []).filter((d) => d.anyo >= 2000).map((d) => ({ x: d.anyo, y: d.valor })),
+}));
+
+/* Nacimientos y defunciones: observado (Eurostat) + proyectado (INE). */
+const PRIMER_PROY = ine.nacimientos[0].anyo;
+const obs = (s: { anyo: number; valor: number }[]) => s.filter((d) => d.anyo >= 1975 && d.anyo < PRIMER_PROY);
+const proy = (s: { anyo: number; valor: number | null }[]) => s;
+const seriesVital: Serie[] = [
+  { id: 'nac-obs', etiqueta: 'Nacimientos', slot: 1, puntos: obs(euro.nacimientos).map((d) => ({ x: d.anyo, y: d.valor })) },
+  { id: 'def-obs', etiqueta: 'Defunciones', slot: 2, puntos: obs(euro.defunciones).map((d) => ({ x: d.anyo, y: d.valor })) },
+  { id: 'nac-proy', etiqueta: 'Nacimientos', slot: 1, trazo: 'proyeccion', puntos: proy(ine.nacimientos).map((d) => ({ x: d.anyo, y: d.valor })) },
+  { id: 'def-proy', etiqueta: 'Defunciones', slot: 2, trazo: 'proyeccion', puntos: proy(ine.defunciones).map((d) => ({ x: d.anyo, y: d.valor })) },
+];
+
+const seriesFecundidad: Serie[] = [
+  { id: 'icf', etiqueta: 'Hijos por mujer', slot: 1, puntos: euro.fecundidad.filter((d) => d.anyo >= 1975).map((d) => ({ x: d.anyo, y: d.valor })) },
+];
+
+const seriesDependencia: Serie[] = [
+  { id: 'dep', etiqueta: 'Dependencia', slot: 2, trazo: 'proyeccion', puntos: ine.tasaDependencia64mas.map((d) => ({ x: d.anyo, y: d.valor })) },
+];
+
+const seriesEnvejecimiento: Serie[] = [
+  { id: 'p65', etiqueta: '65 años y más', slot: 2, trazo: 'proyeccion', puntos: ine.proporcion65mas.map((d) => ({ x: d.anyo, y: d.valor })) },
+  { id: 'p80', etiqueta: '80 años y más', slot: 5, trazo: 'proyeccion', puntos: ine.proporcion80mas.map((d) => ({ x: d.anyo, y: d.valor })) },
+];
+
+/* Proyeccion europea: gasto frente a cotizaciones. */
+const anyosUe = ue.anyos;
+const serieUe = (vals: number[], etiqueta: string, slot: 1 | 2 | 3 | 4 | 5): Serie => ({
+  id: etiqueta, etiqueta, slot, trazo: 'proyeccion',
+  puntos: anyosUe.map((a, i) => ({ x: a, y: vals[i] })),
+});
+const seriesGastoFuturo: Serie[] = [
+  serieUe(ue.gastoPensionesPib.series.gastoPublicoBruto, 'Gasto en pensiones', 2),
+  serieUe(ue.gastoPensionesPib.series.cotizacionesPublicas, 'Cotizaciones', 1),
+];
+const seriesGenerosidad: Serie[] = [
+  serieUe(ue.generosidad.series.tasaSustitucionAlJubilarse, 'Al jubilarse', 1),
+  serieUe(ue.generosidad.series.ratioPrestacionJubilacion, 'Pensión media', 3),
+];
+const seriesPersonas: Serie[] = [
+  serieUe(ue.dependenciaSistema.series.pensionistasMiles, 'Pensionistas', 2),
+  serieUe(ue.dependenciaSistema.series.ocupadosMiles, 'Ocupados', 1),
+];
+
+/* Reparto de pensiones y de la nomina. */
+const tramosClases = CLASES.map((c, i) => ({
+  etiqueta: c.etiqueta,
+  valor: (SNAPSHOT as Record<string, { numero: number }>)[c.clave].numero,
+  slot: SLOTS[i],
+}));
+const d = ss.descomposicionNomina;
+const tramosNomina = [
+  { etiqueta: 'Pensión reconocida al jubilarse', valor: d.pensionInicial!, slot: 1 as const },
+  { etiqueta: 'Revalorizaciones acumuladas', valor: d.revalorizacion!, slot: 2 as const },
+  { etiqueta: 'Complemento a mínimos', valor: d.complementoMinimos!, slot: 3 as const },
+  { etiqueta: 'Otros complementos', valor: d.otrosComplementos!, slot: 4 as const },
+];
+
+/* Rankings. */
+const NOMBRES: Record<string, string> = {
+  IT: 'Italia', AT: 'Austria', FR: 'Francia', FI: 'Finlandia', EL: 'Grecia', BE: 'Bélgica',
+  ES: 'España', PT: 'Portugal', DE: 'Alemania', PL: 'Polonia', DK: 'Dinamarca', NL: 'Países Bajos',
+  SE: 'Suecia', LU: 'Luxemburgo', SI: 'Eslovenia', BG: 'Bulgaria', SK: 'Eslovaquia', HR: 'Croacia',
+  RO: 'Rumanía', LV: 'Letonia', CZ: 'Chequia', EE: 'Estonia', CY: 'Chipre', LT: 'Lituania',
+  HU: 'Hungría', MT: 'Malta', IE: 'Irlanda', IS: 'Islandia', NO: 'Noruega', CH: 'Suiza',
+  TR: 'Türkiye', AL: 'Albania', RS: 'Serbia', ME: 'Montenegro', BA: 'Bosnia y Herzegovina',
+};
+const UE27 = new Set(['BE','BG','CZ','DK','DE','EE','IE','EL','ES','FR','HR','IT','CY','LV','LT','LU','HU','MT','NL','AT','PL','PT','RO','SI','SK','FI','SE']);
+const rankingGasto = euro.rankingUe
+  .filter((r) => UE27.has(r.pais))
+  .map((r) => ({ etiqueta: NOMBRES[r.pais] ?? r.pais, valor: r.valor, destacada: r.pais === 'ES' }));
+const mediaUe = euro.agregadosUe.find((a) => a.pais === 'EU27_2020')!;
+const posEspana = rankingGasto.findIndex((r) => r.destacada) + 1;
+
+const rankingOcde = ocde.paises
+  .slice()
+  .sort((a, b) => b.x1 - a.x1)
+  .map((p) => ({ etiqueta: p.pais, valor: p.x1, destacada: p.iso === 'ES' }));
+const posOcde = rankingOcde.findIndex((r) => r.destacada) + 1;
+
+const factores = [
+  { etiqueta: 'Envejecimiento de la población', valor: ue.descomposicion.factores.efectoDependencia[5], destacada: true },
+  { etiqueta: 'Menos generosidad de la pensión', valor: ue.descomposicion.factores.efectoPensionMedia[5] },
+  { etiqueta: 'Más empleo y carreras más largas', valor: ue.descomposicion.factores.efectoMercadoTrabajo[5] },
+  { etiqueta: 'Cobertura del sistema', valor: ue.descomposicion.factores.efectoCobertura[5] },
+  { etiqueta: 'Residuo', valor: ue.descomposicion.factores.residuo[5] },
+];
+const escenarios = ue.escenarios.casos.map((c) => ({ etiqueta: c.nombre, valor: c.desviacion2070 }));
+
+const tramosPiramide = Object.keys(ine.piramide.datos.hombres).sort((a, b) => parseInt(b) - parseInt(a));
+const ANYO_PIRAMIDE = 2075;
+
+const sep = (v: number) => num(v);
+const fechaSs = periodoTexto(PERIODO_SS);
+---
+
+<Base
+  titulo="Pensiones en España · un informe con datos oficiales"
+  descripcion="Cuánto cuesta el sistema público de pensiones español, de dónde sale el dinero, qué dice la demografía y cómo se compara con Europa. Con todas las fuentes y cálculos abiertos."
+>
+  <!-- ============================================================ portada -->
+  <section class="portada wrap">
+    <p class="eyebrow eyebrow--accent">Informe · datos a {fechaSs}</p>
+    <h1 class="portada__titulo">
+      El sistema de pensiones español, <span class="portada__em">cifra a cifra</span>
+    </h1>
+    <p class="dek portada__dek">
+      España paga hoy {sep(SNAPSHOT.total.numero)} pensiones contributivas al mes. Sostenerlas cuesta
+      alrededor de {meurTexto(nominaAnualMillones)} al año. Esto es lo que dicen las estadísticas oficiales
+      sobre cómo hemos llegado aquí, qué presiona al sistema y qué pasa si las tendencias actuales
+      siguen su curso. Todas las cifras se pueden abrir y rastrear hasta su fuente.
+    </p>
+
+    <div class="portada__cifras">
+      <Cifra
+        valor={`${num(SNAPSHOT.total.numero / 1e6, 2)} M`}
+        etiqueta="pensiones contributivas en vigor"
+        detalle={`Pensiones, no personas. A ${fechaSs}.`}
+        slot={1}
+      />
+      <Cifra
+        valor={eur(SNAPSHOT.total.pensionMediaEurMes!, 0)}
+        etiqueta="pensión media mensual del sistema"
+        detalle={`La de jubilación sube a ${eur(SNAPSHOT.jubilacion.pensionMediaEurMes!, 0)}.`}
+        slot={2}
+      />
+      <Cifra
+        valor={pct(nominaSobrePib, 1)}
+        etiqueta="del PIB se va en pensiones contributivas"
+        detalle={`Nómina de ${fechaSs} anualizada sobre el PIB de ${PIB.anyo}.`}
+        slot={3}
+      />
+      <Cifra
+        valor={num(afiliadosPorPension, 2)}
+        etiqueta="cotizantes por cada pensión"
+        detalle="En 2070 la proyección europea deja 1,3 ocupados por pensionista."
+        slot={4}
+      />
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <div class="article wrap">
+    <!-- ======================================================== seccion 1 -->
+    <header class="seccion">
+      <p class="seccion__num num">01</p>
+      <h2>Qué paga España cada mes</h2>
+      <p class="dek">
+        Antes de discutir el futuro conviene fijar el presente con precisión, porque casi
+        todos los malentendidos sobre pensiones nacen de confundir dos cifras parecidas.
+      </p>
+    </header>
+
+    <p>
+      La estadística que publica el Instituto Nacional de la Seguridad Social cuenta
+      <strong>pensiones</strong>, no pensionistas. Son cosas distintas: una misma persona puede
+      cobrar una pensión de jubilación y, además, una de viudedad. Por eso los pensionistas son
+      menos que las {sep(SNAPSHOT.total.numero)} pensiones en vigor, y por eso las ratios
+      «trabajadores por pensionista» que circulan no siempre coinciden: unas dividen por personas
+      y otras por pensiones. Aquí se usa siempre la de pensiones, porque es la cifra que la
+      Seguridad Social publica íntegra y desglosada.
+    </p>
+
+    <p>
+      De esas pensiones, {pct((SNAPSHOT.jubilacion.numero / SNAPSHOT.total.numero) * 100)} son de
+      jubilación. El segundo bloque, con diferencia, es viudedad: más de 2,3 millones de
+      pensiones que cobran mayoritariamente mujeres y que son las más bajas del sistema junto
+      con las de orfandad.
+    </p>
+
+    <div class="bleed-right">
+      <Figura
+        id="reparto-clases"
+        eyebrow="Composición"
+        titulo="Las pensiones de jubilación son dos de cada tres"
+        dek="Reparto de las pensiones contributivas en vigor por clase."
+        unidad={`Número de pensiones a ${fechaSs}`}
+        fuentes={['inss-pensiones']}
+        advertencia="Cada pensión cuenta una vez, aunque dos de ellas las cobre la misma persona. Para hablar de personas hay que usar la estadística de pensionistas, que es distinta y da una cifra menor."
+        tabla={{
+          columnas: ['Clase', 'Pensiones', 'Nómina mensual', 'Pensión media'],
+          filas: CLASES.map((c) => {
+            const v = (SNAPSHOT as Record<string, { numero: number; importeMilesEur: number | null; pensionMediaEurMes: number | null }>)[c.clave];
+            return [c.etiqueta, sep(v.numero), meur(v.importeMilesEur! / 1000), eur(v.pensionMediaEurMes!, 2)];
+          }),
+        }}
+      >
+        <BarraApilada
+          tramos={tramosClases}
+          formato={(v, cuota) => `${sep(v)} · ${num(cuota, 1)} %`}
+        />
+      </Figura>
+    </div>
+
+    <p>
+      La pensión media del sistema está en {eur(SNAPSHOT.total.pensionMediaEurMes!, 2)} al mes,
+      pero esa media junta realidades muy separadas. Una jubilación del Régimen General paga de
+      media {eur(ss.porRegimen.general.jubilacion.pensionMediaEurMes!, 0)}; una del Régimen de
+      Autónomos, {eur(ss.porRegimen.autonomos.jubilacion.pensionMediaEurMes!, 0)}. Son casi
+      {' '}{num(ss.porRegimen.general.jubilacion.pensionMediaEurMes! / ss.porRegimen.autonomos.jubilacion.pensionMediaEurMes!, 1)} veces
+      de diferencia, y explican por qué el debate sobre las bases de cotización de los autónomos
+      es, en realidad, un debate sobre pensiones futuras.
+    </p>
+
+    <div class="bleed-right">
+      <Figura
+        id="pension-media-clase"
+        eyebrow="Evolución"
+        titulo="Todas las clases de pensión suben, pero la brecha entre ellas no se cierra"
+        dek="Pensión media mensual por clase. Las subidas de los últimos años combinan la revalorización con el relevo generacional: quien entra al sistema lo hace con una pensión más alta que la de quien sale."
+        unidad="Euros al mes"
+        fuentes={['inss-pensiones']}
+        advertencia="La serie oficial publica cierres de diciembre para 2022-2025 y datos a primero de mes para 2026, así que el último tramo es mensual y los anteriores anuales. La subida no mide lo que gana un pensionista concreto: también refleja que las nuevas pensiones entran más altas que las que causan baja."
+        tabla={{
+          columnas: ['Periodo', ...CLASES.map((c) => c.etiqueta)],
+          filas: ss.evolucion.map((p) => [
+            `${p.periodo} ${p.anyo}`,
+            ...CLASES.map((c) => eur((p.clases as Record<string, { pensionMediaEurMes: number | null }>)[c.clave]?.pensionMediaEurMes ?? 0, 2)),
+          ]),
+        }}
+      >
+        <GraficoLineas series={seriesPensionMedia} formato="eur" alto={340} />
+        <Leyenda slot="pie" entradas={CLASES.map((c, i) => ({ etiqueta: c.etiqueta, slot: SLOTS[i], forma: 'linea' }))} />
+      </Figura>
+    </div>
+
+    <p>
+      Hay un dato poco citado y que cambia la lectura de todo lo anterior: la estadística separa
+      lo que se reconoció a cada pensión el día que se concedió de lo que se ha ido sumando
+      después con las subidas anuales. Hoy, <strong>{pct(cuotaRevalorizacion)} de la nómina
+      mensual es revalorización acumulada</strong>. No es un detalle contable: desde 2021 la ley
+      ata esas subidas al IPC, de modo que una parte creciente del gasto se decide fuera del
+      sistema, en la inflación.
+    </p>
+
+    <div class="bleed-right">
+      <Figura
+        id="descomposicion-nomina"
+        eyebrow="Anatomía del gasto"
+        titulo="Casi un cuarto de la nómina no se decidió al conceder las pensiones"
+        dek="De qué está hecha la nómina mensual de pensiones contributivas."
+        unidad={`Millones de euros al mes · ${fechaSs}`}
+        fuentes={['inss-pensiones']}
+        calculo="peso-revalorizacion"
+        advertencia="El complemento a mínimos es la parte que paga el Estado para elevar las pensiones más bajas hasta el mínimo legal; se financia con impuestos, no con cotizaciones. «Otros complementos» incluye el de brecha de género y el de maternidad."
+        tabla={{
+          columnas: ['Concepto', 'Millones de euros al mes', '% de la nómina'],
+          filas: tramosNomina.map((t) => [t.etiqueta, meur(t.valor), pct((t.valor / d.totalMillonesEur!) * 100)]),
+        }}
+      >
+        <BarraApilada tramos={tramosNomina} formato={(v, cuota) => `${meur(v)} · ${num(cuota, 1)} %`} />
+      </Figura>
+    </div>
+
+    <aside class="nota">
+      <p class="eyebrow">Una brecha que los agregados esconden</p>
+      <p>
+        Las mujeres son mayoría entre quienes cobran una pensión y, aun así, reciben
+        {' '}<strong>{pct(cuotaNominaMujeres)} del dinero</strong> de la nómina mensual. Concentran
+        casi todas las pensiones de viudedad —las más bajas— y arrastran carreras de cotización
+        más cortas e interrumpidas. Es la misma brecha salarial de hace treinta años, cobrada hoy.
+      </p>
+    </aside>
+
+    <!-- ======================================================== seccion 2 -->
+    <header class="seccion">
+      <p class="seccion__num num">02</p>
+      <h2>Cómo hemos llegado hasta aquí</h2>
+      <p class="dek">
+        El gasto en pensiones sobre el PIB no ha subido de forma suave. Subió de golpe con la
+        crisis, se estancó una década y volvió a moverse después de 2020.
+      </p>
+    </header>
+
+    <p>
+      Para comparar países hace falta una vara de medir común, y la que existe es ESSPROS, la
+      estadística armonizada de protección social de Eurostat. Mide algo más amplio que el
+      presupuesto de la Seguridad Social española —incluye viudedad, incapacidad y los esquemas
+      privados obligatorios—, así que sus cifras no coinciden con las nacionales. Lo que sí
+      permite es ver la forma de la curva.
+    </p>
+
+    <p>
+      Y la forma importa. España pasó del {pct(gastoPib.ES.find((d) => d.anyo === 2007)!.valor)} del
+      PIB en 2007 al {pct(gastoPib.ES.find((d) => d.anyo === 2013)!.valor)} en 2013. Casi todo ese
+      salto no fue porque se gastara mucho más, sino porque el denominador se hundió: el PIB cayó
+      y el paro disparó el gasto social. Luego vino una década de estabilidad y, con la pandemia,
+      un nuevo escalón.
+    </p>
+
+    <div class="bleed">
+      <Figura
+        id="gasto-pib-serie"
+        eyebrow="Serie larga"
+        titulo="España converge con la media europea y la supera después de 2012"
+        dek="Gasto en pensiones sobre el PIB, criterio ESSPROS. Los saltos de 2009 y 2020 se explican tanto por el numerador como por el denominador: en una recesión el PIB cae y el cociente sube aunque el gasto no se mueva."
+        unidad="% del PIB"
+        fuentes={['eurostat-esspros']}
+        advertencia="Un porcentaje sobre el PIB es un cociente, y puede moverse porque cambie el numerador o porque cambie el denominador. Leer esta serie como «decisiones de gasto» es el error más común: buena parte de los escalones son recesiones. ESSPROS, además, incluye más conceptos que el presupuesto español de pensiones."
+        tabla={{
+          columnas: ['Año', ...PAISES_COMP.map((p) => p.etiqueta)],
+          filas: (gastoPib.ES ?? []).filter((d) => d.anyo >= 2000 && d.anyo % 4 === 0 || d.anyo === 2024)
+            .map((d) => [
+              String(d.anyo),
+              ...PAISES_COMP.map((p) => {
+                const v = (gastoPib[p.cod] ?? []).find((x) => x.anyo === d.anyo);
+                return v ? pct(v.valor) : '—';
+              }),
+            ]),
+        }}
+      >
+        <GraficoLineas series={seriesGastoPib} formato="pct" alto={380} hitos={[{ x: 2013, texto: 'reforma de 2013' }, { x: 2021, texto: 'reforma de 2021' }]} />
+        <Leyenda slot="pie" entradas={PAISES_COMP.map((p) => ({ etiqueta: p.etiqueta, slot: p.slot, forma: 'linea' }))} />
+      </Figura>
+    </div>
+
+    <p>
+      Entre medias cambiaron las reglas dos veces en direcciones opuestas. La reforma de 2011
+      subió la edad legal de jubilación hacia los 67 años y amplió a 25 años el periodo de
+      cotización que se usa para calcular la pensión. La de 2013 añadió dos mecanismos de ajuste
+      automático: un índice de revalorización que desligaba las pensiones del IPC y un factor de
+      sostenibilidad que recortaría las pensiones nuevas a medida que creciera la esperanza de
+      vida.
+    </p>
+
+    <p>
+      La reforma de 2021-2023 deshizo buena parte de eso. Derogó el factor de sostenibilidad,
+      devolvió la revalorización al IPC por ley e introdujo, a cambio, dos vías de ingreso: el
+      Mecanismo de Equidad Intergeneracional —una cotización adicional que va al Fondo de
+      Reserva— y el aumento de las bases máximas con una cuota de solidaridad sobre los salarios
+      altos. Es el cambio que explica por qué las proyecciones europeas de 2024 son mucho más
+      caras que las de 2021.
+    </p>
+
+    <aside class="nota">
+      <p class="eyebrow">Los parámetros vigentes en {sistema.ejercicio}</p>
+      <ul class="nota__lista">
+        <li><span>Revalorización</span><span class="num">{pct(sistema.revalorizacion.porcentaje2026)}</span></li>
+        <li><span>Pensión máxima</span><span class="num">{eur(sistema.cuantias.pensionMaxima.mes, 2)}/mes</span></li>
+        <li><span>Mínima de jubilación con cónyuge a cargo</span><span class="num">{eur(sistema.cuantias.minimaJubilacion65ConConyuge.anyo)}/año</span></li>
+        <li><span>No contributiva</span><span class="num">{eur(sistema.cuantias.noContributiva.anyo)}/año</span></li>
+        <li><span>Edad ordinaria</span><span class="num">{sistema.edadJubilacion.anyo2026.edadOrdinaria}</span></li>
+        <li><span>…o a los 65 con</span><span class="num">{sistema.edadJubilacion.anyo2026.cotizacionParaCarreraLarga}</span></li>
+        <li><span>Base máxima de cotización</span><span class="num">{eur(sistema.cotizacion.baseMaximaMes, 2)}/mes</span></li>
+        <li><span>Cotización del MEI</span><span class="num">{pct(sistema.cotizacion.mei.tipo2026, 1)}</span></li>
+      </ul>
+      <p class="nota__pie">
+        Fuente: <a href={sistema.revalorizacion.url} target="_blank" rel="noopener noreferrer">Real Decreto 241/2026</a>
+        y <a href={sistema.cotizacion.url} target="_blank" rel="noopener noreferrer">Orden PJC/297/2026</a>.
+        {sistema.revalorizacion.nota}
+      </p>
+    </aside>
+
+    <!-- ======================================================== seccion 3 -->
+    <header class="seccion">
+      <p class="seccion__num num">03</p>
+      <h2>La aritmética que no se negocia</h2>
+      <p class="dek">
+        Un sistema de reparto es un contrato entre generaciones: los que trabajan pagan a los que
+        se han retirado. Su salud depende de cuánta gente hay a cada lado de ese contrato.
+      </p>
+    </header>
+
+    <p>
+      En 1975 nacieron en España {sep(euro.nacimientos.find((d) => d.anyo === 1975)!.valor)} niños. En
+      {' '}{euro.nacimientos.at(-1)!.anyo} nacieron {sep(euro.nacimientos.at(-1)!.valor)}: una caída
+      del {pct(Math.abs(caidaNacimientos))} desde el máximo de la serie. Al mismo tiempo, las
+      defunciones no dejan de crecer, porque las generaciones numerosas del baby boom español
+      están llegando a las edades en las que se muere.
+    </p>
+
+    <p>
+      El resultado es un saldo vegetativo negativo —mueren más personas de las que nacen— que el
+      INE proyecta durante <strong>todo</strong> el horizonte hasta 2075. Si la población española
+      crece en esas proyecciones, es exclusivamente por inmigración. El propio INE lo dice con esas
+      palabras.
+    </p>
+
+    <div class="bleed">
+      <Figura
+        id="nacimientos-defunciones"
+        eyebrow="Natalidad y mortalidad"
+        titulo="Las dos curvas se cruzaron en 2015 y ya no vuelven a cruzarse"
+        dek="Nacimientos y defunciones en España. Hasta 2025, datos observados; desde 2026, la proyección central del INE, que asume una leve recuperación de la fecundidad."
+        unidad="Personas al año"
+        fuentes={['eurostat-demo', 'ine-proyecciones']}
+        calculo="caida-natalidad"
+        advertencia="La parte proyectada no es un pronóstico: es lo que ocurriría si se mantuvieran las tendencias actuales, y el INE lo advierte de forma explícita. El repunte de nacimientos después de 2058 no supone más hijos por mujer, sino que llegan a la edad fértil generaciones más numerosas."
+        tabla={{
+          columnas: ['Año', 'Nacimientos', 'Defunciones', 'Saldo'],
+          filas: [1975, 1985, 1995, 2005, 2015, 2025].map((a) => {
+            const n = euro.nacimientos.find((d) => d.anyo === a)?.valor ?? 0;
+            const m = euro.defunciones.find((d) => d.anyo === a)?.valor ?? 0;
+            return [String(a), sep(n), sep(m), sep(n - m)];
+          }).concat([2030, 2050, 2075].map((a) => {
+            const n = ine.nacimientos.find((d) => d.anyo === a)?.valor ?? 0;
+            const m = ine.defunciones.find((d) => d.anyo === a)?.valor ?? 0;
+            return [`${a} (proyectado)`, sep(n), sep(m), sep(n - m)];
+          })),
+        }}
+      >
+        <GraficoLineas
+          series={seriesVital}
+          formato="miles"
+          alto={380}
+          desdeProyeccion={PRIMER_PROY}
+          desdeCero
+          etiquetar={['nac-proy', 'def-proy']}
+        />
+        <Leyenda
+          slot="pie"
+          entradas={[
+            { etiqueta: 'Nacimientos', slot: 1, forma: 'linea' },
+            { etiqueta: 'Defunciones', slot: 2, forma: 'linea' },
+            { etiqueta: 'Proyección INE', tono: 'neutro', forma: 'trazo' },
+          ]}
+        />
+      </Figura>
+    </div>
+
+    <div class="bleed-right">
+      <Figura
+        id="fecundidad"
+        eyebrow="Fecundidad"
+        titulo="Una española tiene hoy menos de la mitad de hijos que su abuela"
+        dek="Indicador coyuntural de fecundidad: número medio de hijos por mujer. El nivel de reemplazo generacional está en torno a 2,1."
+        unidad="Hijos por mujer"
+        fuentes={['eurostat-demo']}
+        advertencia="El indicador coyuntural es una foto de un año, no la descendencia final de una generación. Cuando la maternidad se retrasa, el indicador cae más de lo que caerá el número final de hijos: parte del descenso es aplazamiento, no renuncia."
+        tabla={{
+          columnas: ['Año', 'Hijos por mujer'],
+          filas: [1975, 1985, 1995, 2005, 2015, 2024].map((a) => [
+            String(a), num(euro.fecundidad.find((d) => d.anyo === a)?.valor ?? 0, 2),
+          ]),
+        }}
+      >
+        <GraficoLineas series={seriesFecundidad} formato="entero" alto={280} area desdeCero />
+      </Figura>
+    </div>
+
+    <p>
+      La consecuencia llega con décadas de retraso, y ahí está la trampa de este debate: la
+      natalidad de este año no afecta a las pensiones de esta década, sino a las de la segunda
+      mitad de siglo. Lo que sí afecta ya es la forma de la pirámide de población, porque el baby
+      boom español —tardío respecto al europeo, concentrado entre 1957 y 1977— está entrando
+      ahora mismo en la edad de jubilación.
+    </p>
+
+    <div class="bleed">
+      <Figura
+        id="piramide"
+        eyebrow="Estructura de edades"
+        titulo="La pirámide ya no es una pirámide, y en 2075 lo será menos"
+        dek={`Población por sexo y tramo de edad. El relleno es ${2026}; el contorno, la proyección a ${ANYO_PIRAMIDE}. El bulto que hoy está entre los 45 y los 60 años es el baby boom español entrando en la jubilación.`}
+        unidad="Población por tramo de cinco años"
+        fuentes={['ine-proyecciones']}
+        advertencia="Los dos sexos usan la misma escala, así que los anchos son comparables entre lados. Los tramos agregan edades simples de cinco en cinco a partir de la tabla de población por edad del INE."
+        tabla={{
+          columnas: ['Tramo', `Hombres 2026`, `Mujeres 2026`, `Hombres ${ANYO_PIRAMIDE}`, `Mujeres ${ANYO_PIRAMIDE}`],
+          filas: tramosPiramide.map((t) => [
+            t,
+            sep(ine.piramide.datos.hombres[t]?.[2026] ?? 0),
+            sep(ine.piramide.datos.mujeres[t]?.[2026] ?? 0),
+            sep(ine.piramide.datos.hombres[t]?.[ANYO_PIRAMIDE] ?? 0),
+            sep(ine.piramide.datos.mujeres[t]?.[ANYO_PIRAMIDE] ?? 0),
+          ]),
+        }}
+      >
+        <Piramide
+          tramos={tramosPiramide}
+          hombres={ine.piramide.datos.hombres}
+          mujeres={ine.piramide.datos.mujeres}
+          anyoBase={2026}
+          anyoProyectado={ANYO_PIRAMIDE}
+        />
+        <Leyenda
+          slot="pie"
+          entradas={[
+            { etiqueta: 'Hombres 2026', slot: 1 },
+            { etiqueta: 'Mujeres 2026', slot: 5 },
+            { etiqueta: `Contorno: proyección ${ANYO_PIRAMIDE}`, tono: 'neutro', forma: 'linea' },
+          ]}
+        />
+      </Figura>
+    </div>
+
+    <div class="bleed-right">
+      <Figura
+        id="envejecimiento"
+        eyebrow="Envejecimiento"
+        titulo="De 32 a 53 mayores por cada 100 personas en edad de trabajar"
+        dek="Tasa de dependencia de los mayores de 64 años: cuántas personas de 65 o más hay por cada 100 de 16 a 64. Es el indicador que más pesa en todas las proyecciones de gasto."
+        unidad="Mayores de 64 por cada 100 personas de 16 a 64 años"
+        fuentes={['ine-proyecciones']}
+        advertencia="Es una ratio puramente demográfica: cuenta personas por edad, no por si trabajan o cobran pensión. Una tasa de dependencia alta se puede sostener mejor si sube el empleo o la productividad; por eso no equivale directamente a gasto."
+        tabla={{
+          columnas: ['Año', 'Mayores de 64 por 100 de 16-64', '% de población con 65 años o más', '% con 80 o más'],
+          filas: [2026, 2035, 2045, 2050, 2060, 2075].map((a) => [
+            String(a),
+            num(ine.tasaDependencia64mas.find((d) => d.anyo === a)?.valor ?? 0, 1),
+            pct(ine.proporcion65mas.find((d) => d.anyo === a)?.valor ?? 0),
+            pct(ine.proporcion80mas.find((d) => d.anyo === a)?.valor ?? 0),
+          ]),
+        }}
+      >
+        <GraficoLineas series={seriesDependencia} formato="entero" alto={270} desdeCero />
+        <div slot="pie" class="sub-figura">
+          <GraficoLineas series={seriesEnvejecimiento} formato="pct" alto={230} desdeCero />
+          <Leyenda
+            entradas={[
+              { etiqueta: '% de población con 65 años o más', slot: 2, forma: 'linea' },
+              { etiqueta: '% con 80 años o más', slot: 5, forma: 'linea' },
+            ]}
+          />
+        </div>
+      </Figura>
+    </div>
+
+    <!-- ======================================================== seccion 4 -->
+    <header class="seccion">
+      <p class="seccion__num num">04</p>
+      <h2>Lo que dicen las proyecciones</h2>
+      <p class="dek">
+        La referencia no es una estimación de nadie en particular: es el Ageing Report, la
+        proyección que la Comisión Europea acuerda con cada gobierno y que se usa en el marco
+        fiscal europeo. Para España dibuja una joroba.
+      </p>
+    </header>
+
+    <p>
+      El gasto público en pensiones pasaría del {pct(ue.gastoPensionesPib.series.gastoPublicoBruto[0])}
+      del PIB en 2022 a un máximo del {pct(ue.gastoPensionesPib.pico.valor)} en
+      {' '}{ue.gastoPensionesPib.pico.anyo}, para bajar luego y estabilizarse en torno al
+      {' '}{pct(ue.gastoPensionesPib.series.gastoPublicoBruto[5])} en 2070. Es una joroba, no una
+      rampa: la presión se concentra en las tres próximas décadas, mientras se jubila el baby boom,
+      y se relaja después.
+    </p>
+
+    <p>
+      La parte incómoda está en la distancia entre las dos líneas del gráfico. Las cotizaciones
+      crecen, pero no al ritmo del gasto: el saldo del sistema pasaría de
+      {' '}{pct(Math.abs(ue.gastoPensionesPib.series.saldoSistemaPublico[0]))} de déficit en 2022 a
+      {' '}<strong>{pct(Math.abs(ue.gastoPensionesPib.series.saldoSistemaPublico[3]))} del PIB
+      en 2050</strong>. Esa diferencia hay que cerrarla con algo: más impuestos, más deuda, o
+      menos pensión.
+    </p>
+
+    <div class="bleed">
+      <Figura
+        id="gasto-futuro"
+        eyebrow="Proyección oficial"
+        titulo="El gasto hace cumbre hacia 2051; las cotizaciones no la siguen"
+        dek="Gasto público en pensiones y cotizaciones al sistema, en porcentaje del PIB. La distancia entre las dos líneas es el déficit del sistema de pensiones."
+        unidad="% del PIB · proyección 2022-2070"
+        fuentes={['ageing-report-2024']}
+        advertencia="Toda proyección a cincuenta años es un escenario condicionado, no un pronóstico: depende de supuestos sobre empleo, productividad, migración y longevidad que nadie puede garantizar. Esta serie, además, ya incorpora la reforma de 2021-2023, y por eso es bastante más alta que la del Ageing Report de 2021."
+        tabla={{
+          columnas: ['Año', 'Gasto bruto', 'Gasto neto de impuestos', 'Cotizaciones', 'Saldo'],
+          filas: anyosUe.map((a, i) => [
+            String(a),
+            pct(ue.gastoPensionesPib.series.gastoPublicoBruto[i]),
+            pct(ue.gastoPensionesPib.series.gastoPublicoNeto[i]),
+            pct(ue.gastoPensionesPib.series.cotizacionesPublicas[i]),
+            pct(ue.gastoPensionesPib.series.saldoSistemaPublico[i]),
+          ]),
+        }}
+      >
+        <GraficoLineas series={seriesGastoFuturo} formato="pct" alto={340} />
+        <Leyenda
+          slot="pie"
+          entradas={[
+            { etiqueta: 'Gasto en pensiones', slot: 2, forma: 'linea' },
+            { etiqueta: 'Cotizaciones', slot: 1, forma: 'linea' },
+          ]}
+        />
+      </Figura>
+    </div>
+
+    <p>
+      Conviene saber de dónde sale ese aumento, porque la proyección lo desglosa. El
+      envejecimiento, por sí solo, empujaría el gasto hacia arriba
+      {' '}{num(ue.descomposicion.factores.efectoDependencia[5], 1)} puntos de PIB. Lo que impide que
+      ocurra es, sobre todo, que <strong>la pensión media pierde peso frente al salario
+      medio</strong>: ese factor resta {num(Math.abs(ue.descomposicion.factores.efectoPensionMedia[5]), 1)}
+      {' '}puntos. Más empleo y carreras más largas restan otros
+      {' '}{num(Math.abs(ue.descomposicion.factores.efectoMercadoTrabajo[5]), 1)}.
+    </p>
+
+    <div class="bleed-right">
+      <Figura
+        id="descomposicion-factores"
+        eyebrow="De dónde viene el aumento"
+        titulo="El envejecimiento empuja diez puntos; la generosidad y el empleo devuelven seis"
+        dek="Contribución de cada factor al cambio del gasto en pensiones entre 2022 y 2070. La suma de todos equivale al aumento total de 3,6 puntos de PIB."
+        unidad="Puntos porcentuales de PIB, 2022-2070"
+        fuentes={['ageing-report-2024']}
+        advertencia="Es una descomposición contable, no causal: reparte el resultado entre factores que interactúan entre sí. «Menos generosidad» no es una decisión explícita, sino el efecto agregado de las reglas de cálculo cuando los salarios crecen más que las pensiones."
+        tabla={{
+          columnas: ['Factor', ...ue.descomposicion.tramos],
+          filas: [
+            ['Envejecimiento', ...ue.descomposicion.factores.efectoDependencia.map((v) => num(v, 1))],
+            ['Cobertura', ...ue.descomposicion.factores.efectoCobertura.map((v) => num(v, 1))],
+            ['Generosidad de la pensión', ...ue.descomposicion.factores.efectoPensionMedia.map((v) => num(v, 1))],
+            ['Mercado de trabajo', ...ue.descomposicion.factores.efectoMercadoTrabajo.map((v) => num(v, 1))],
+            ['Residuo', ...ue.descomposicion.factores.residuo.map((v) => num(v, 1))],
+            ['Total', ...ue.descomposicion.factores.total.map((v) => num(v, 1))],
+          ],
+        }}
+      >
+        <GraficoDivergente filas={factores} unidad=" pp" />
+        <Leyenda
+          slot="pie"
+          entradas={[
+            { etiqueta: 'Empuja el gasto al alza', slot: 2 },
+            { etiqueta: 'Lo contiene', slot: 1 },
+          ]}
+        />
+      </Figura>
+    </div>
+
+    <p>
+      Dicho sin eufemismos: el sistema se equilibra, en parte, pagando pensiones que valen
+      relativamente menos. La tasa de sustitución al jubilarse —lo que cobra una pensión nueva
+      respecto al último salario— bajaría del {pct(ue.generosidad.series.tasaSustitucionAlJubilarse[0], 0)}
+      al {pct(ue.generosidad.series.tasaSustitucionAlJubilarse[5], 0)} en 2070. Seguiría siendo alta
+      en términos europeos, pero es un recorte de trece puntos que no aparece en ningún titular
+      porque no lo decide ninguna ley de un día concreto.
+    </p>
+
+    <div class="bleed-right">
+      <Figura
+        id="generosidad"
+        eyebrow="Generosidad"
+        titulo="Las pensiones no bajan: pierden terreno frente a los salarios"
+        dek="Tasa de sustitución al jubilarse y relación entre la pensión media de jubilación y el salario medio."
+        unidad="% del salario · proyección 2022-2070"
+        fuentes={['ageing-report-2024']}
+        advertencia="Ninguna de estas dos series implica que una pensión concreta se reduzca en euros: las pensiones en vigor se revalorizan con el IPC. Lo que cae es su valor relativo frente a los salarios, que crecen más deprisa que los precios."
+        tabla={{
+          columnas: ['Año', 'Tasa de sustitución al jubilarse', 'Pensión media de jubilación sobre salario medio'],
+          filas: anyosUe.map((a, i) => [
+            String(a),
+            pct(ue.generosidad.series.tasaSustitucionAlJubilarse[i], 0),
+            pct(ue.generosidad.series.ratioPrestacionJubilacion[i], 0),
+          ]),
+        }}
+      >
+        <GraficoLineas series={seriesGenerosidad} formato="pct" alto={280} desdeCero />
+        <Leyenda
+          slot="pie"
+          entradas={[
+            { etiqueta: 'Al jubilarse', slot: 1, forma: 'linea' },
+            { etiqueta: 'Pensión media de jubilación', slot: 3, forma: 'linea' },
+          ]}
+        />
+      </Figura>
+    </div>
+
+    <p>
+      El número puro también ayuda a entender la escala. En 2022 había
+      {' '}{sep(ue.dependenciaSistema.series.pensionistasMiles[0] * 1000)} pensionistas y
+      {' '}{sep(ue.dependenciaSistema.series.ocupadosMiles[0] * 1000)} ocupados. En 2070, la proyección
+      deja {sep(ue.dependenciaSistema.series.pensionistasMiles[5] * 1000)} pensionistas y
+      {' '}{sep(ue.dependenciaSistema.series.ocupadosMiles[5] * 1000)} ocupados. La pirámide del contrato
+      se invierte: de dos cotizantes por pensionista a poco más de uno.
+    </p>
+
+    <div class="bleed-right">
+      <Figura
+        id="personas-sistema"
+        eyebrow="Las dos mitades del contrato"
+        titulo="Los pensionistas crecen en cinco millones; los ocupados no crecen"
+        dek="Número de pensionistas y de ocupados proyectados. El empleo sube hasta 2040 y vuelve en 2070 casi al nivel de 2022."
+        unidad="Personas · proyección 2022-2070"
+        fuentes={['ageing-report-2024']}
+        advertencia="Aquí «pensionistas» son personas y no pensiones, así que esta serie no es comparable con el recuento de pensiones de la primera sección. Los ocupados incluyen a todos los sectores, no solo a los cotizantes del régimen general."
+        tabla={{
+          columnas: ['Año', 'Pensionistas', 'Ocupados', 'Pensionistas por 100 ocupados'],
+          filas: anyosUe.map((a, i) => [
+            String(a),
+            sep(ue.dependenciaSistema.series.pensionistasMiles[i] * 1000),
+            sep(ue.dependenciaSistema.series.ocupadosMiles[i] * 1000),
+            num(ue.dependenciaSistema.series.ratioDependenciaSistemaPct[i]),
+          ]),
+        }}
+      >
+        <GraficoLineas series={seriesPersonas} formato="miles" alto={300} desdeCero />
+        <Leyenda
+          slot="pie"
+          entradas={[
+            { etiqueta: 'Pensionistas', slot: 2, forma: 'linea' },
+            { etiqueta: 'Ocupados', slot: 1, forma: 'linea' },
+          ]}
+        />
+      </Figura>
+    </div>
+
+    <p>
+      Ninguna de estas cifras es destino. La propia proyección calcula qué pasaría si los
+      supuestos fallaran, y el resultado es revelador: lo que más mueve la aguja no es la
+      demografía, sino las decisiones. Congelar la edad de jubilación costaría
+      {' '}{num(ue.escenarios.casos.find((c) => c.nombre.includes('congelar'))!.desviacion2070, 1)} puntos
+      de PIB más en 2070; ligarla a la longevidad ahorraría
+      {' '}{num(Math.abs(ue.escenarios.casos.find((c) => c.nombre.includes('longevidad'))!.desviacion2070), 1)}.
+    </p>
+
+    <div class="bleed-right">
+      <Figura
+        id="escenarios"
+        eyebrow="Sensibilidad"
+        titulo="Qué pasaría si los supuestos fallaran"
+        dek="Desviación del gasto en pensiones en 2070 respecto al escenario central, bajo supuestos alternativos."
+        unidad="Puntos porcentuales de PIB sobre el escenario base del 16,7 %"
+        fuentes={['ageing-report-2024']}
+        advertencia="Cada escenario cambia un supuesto y deja los demás quietos, así que no se pueden sumar. Los tres últimos no son escenarios demográficos sino de política: describen el coste de decisiones legislativas, no riesgos externos."
+        tabla={{
+          columnas: ['Escenario', 'Desviación en 2070 (pp de PIB)', 'Gasto resultante'],
+          filas: ue.escenarios.casos.map((c) => [
+            c.nombre,
+            `${c.desviacion2070 > 0 ? '+' : ''}${num(c.desviacion2070, 1)}`,
+            pct(ue.escenarios.base2070 + c.desviacion2070),
+          ]),
+        }}
+      >
+        <GraficoDivergente filas={escenarios} unidad=" pp" />
+        <Leyenda
+          slot="pie"
+          entradas={[
+            { etiqueta: 'Más gasto que en el escenario base', slot: 2 },
+            { etiqueta: 'Menos gasto', slot: 1 },
+          ]}
+        />
+      </Figura>
+    </div>
+
+    <!-- ======================================================== seccion 5 -->
+    <header class="seccion">
+      <p class="seccion__num num">05</p>
+      <h2>España frente al resto</h2>
+      <p class="dek">
+        En gasto, España está en la mitad alta de Europa pero lejos de la cabeza. En generosidad
+        del sistema, en cambio, está entre los primeros del mundo. Las dos cosas son verdad a la vez.
+      </p>
+    </header>
+
+    <p>
+      Con el criterio homogéneo de Eurostat, España dedicó a pensiones el
+      {' '}{pct(euro.rankingUe.find((r) => r.pais === 'ES')!.valor)} del PIB en {euro.anyoRanking}:
+      el puesto {posEspana} de los veintisiete, por encima de la media de la UE
+      ({pct(mediaUe.valor)}) pero por detrás de Italia, Austria, Francia, Finlandia, Grecia y
+      Bélgica. Quien diga que España gasta poco y quien diga que gasta demasiado pueden citar
+      este mismo gráfico.
+    </p>
+
+    <div class="bleed-right">
+      <Figura
+        id="ranking-gasto"
+        eyebrow="Comparación europea"
+        titulo={`España es el ${posEspana}.º de la UE en gasto en pensiones sobre el PIB`}
+        dek="Gasto en pensiones sobre el PIB en los países de la UE-27, criterio ESSPROS."
+        unidad={`% del PIB · ${euro.anyoRanking}`}
+        fuentes={['eurostat-esspros']}
+        advertencia="Comparar porcentajes sobre PIB mezcla dos cosas distintas: cuánto se paga a cada pensionista y cuántos pensionistas hay. Un país joven con pensiones generosas puede gastar menos que un país viejo con pensiones modestas. Irlanda aparece al final en buena parte porque tiene la población más joven de la UE y un PIB inflado por multinacionales."
+        tabla={{
+          columnas: ['País', '% del PIB'],
+          filas: rankingGasto.map((r) => [r.etiqueta, pct(r.valor)]),
+        }}
+      >
+        <GraficoRanking
+          filas={rankingGasto}
+          formato="pct"
+          referencias={[{ valor: mediaUe.valor, etiqueta: 'Media UE-27' }]}
+        />
+      </Figura>
+    </div>
+
+    <p>
+      El contraste llega con la otra medida. La OCDE calcula cuánto conserva de su último salario
+      quien empieza a trabajar hoy, hace carrera completa y se jubila con las reglas ya
+      legisladas. En España ese porcentaje es del
+      {' '}{pct(ocde.paises.find((p) => p.iso === 'ES')!.x1)} para un salario medio, frente al
+      {' '}{pct(ocde.mediaOcde.x1)} de media en la OCDE: el puesto {posOcde} de los
+      {' '}{ocde.paises.length} países analizados. El sistema español es, en diseño, uno de los más
+      generosos del mundo rico.
+    </p>
+
+    <div class="bleed-right">
+      <Figura
+        id="ranking-ocde"
+        eyebrow="Generosidad comparada"
+        titulo="El sistema español está entre los más generosos de la OCDE"
+        dek="Tasa de sustitución neta para un trabajador con salario medio y carrera completa, con las reglas ya legisladas."
+        unidad="% del salario previo, neto de impuestos y cotizaciones"
+        fuentes={['ocde-pensions-2025']}
+        advertencia="Es una tasa teórica, no lo que cobran los pensionistas de hoy: describe a quien empieza a trabajar ahora, cotiza sin interrupciones toda su vida y se jubila a la edad normal de su país. Casi nadie cumple ese perfil. Tampoco mide suficiencia: un país con salarios bajos puede tener una tasa altísima y pensiones pequeñas. Y donde los planes privados son el pilar central —Países Bajos, Dinamarca— la cifra incluye esa parte obligatoria."
+        tabla={{
+          columnas: ['País', 'Edad de jubilación', '0,5× salario medio', '1× salario medio', '2× salario medio'],
+          filas: ocde.paises.slice().sort((a, b) => b.x1 - a.x1).map((p) => [
+            p.pais, String(p.edad), pct(p.x05), pct(p.x1), pct(p.x2),
+          ]),
+        }}
+      >
+        <GraficoRanking
+          filas={rankingOcde}
+          formato="pct"
+          referencias={[{ valor: ocde.mediaOcde.x1, etiqueta: 'Media OCDE' }]}
+        />
+      </Figura>
+    </div>
+
+    <aside class="nota">
+      <p class="eyebrow">Las dos frases que parecen contradictorias</p>
+      <p>
+        «España gasta más que la media europea en pensiones» y «España tiene una de las pensiones
+        más generosas de la OCDE» describen cosas distintas y las dos son correctas. La primera es
+        un cociente sobre el PIB, y depende tanto de la pensión como de cuántos pensionistas hay y
+        de lo grande que sea la economía. La segunda mide solo el diseño del sistema: qué fracción
+        del salario repone una pensión completa. España combina una pensión relativamente alta con
+        una población que aún no ha envejecido del todo: de ahí que el gasto no esté todavía en
+        cabeza. Eso es precisamente lo que las proyecciones esperan que cambie.
+      </p>
+    </aside>
+
+    <!-- ======================================================== seccion 6 -->
+    <header class="seccion">
+      <p class="seccion__num num">06</p>
+      <h2>De dónde sale el dinero</h2>
+      <p class="dek">
+        La nómina de pensiones no se paga solo con cotizaciones, y desde 2021 ese hecho dejó de
+        ser una excepción contable para convertirse en estructura.
+      </p>
+    </header>
+
+    <p>
+      El sistema recauda por cotizaciones sociales, pero no lo suficiente. La diferencia se cubre
+      con transferencias del Estado, es decir, con impuestos generales y deuda. Según la
+      reconstrucción de las cuentas que publica FEDEA sobre fuentes oficiales, el saldo no
+      financiero de la Seguridad Social Ampliada fue de
+      {' '}{meur(Math.abs(sistema.cuentasSistema.saldoNoFinanciero2024MillonesEur))} negativos en 2024,
+      <em>incluyendo ya</em> esas transferencias.
+    </p>
+
+    <div class="bleed-right">
+      <div class="cuadro">
+        <div class="cuadro__item">
+          <p class="eyebrow">Cotización del MEI</p>
+          <p class="cuadro__v num">{pct(sistema.cotizacion.mei.tipo2026, 1)}</p>
+          <p class="cuadro__t">
+            Sobre la base de contingencias comunes: {pct(sistema.cotizacion.mei.reparto.empresa, 2)} lo
+            paga la empresa y {pct(sistema.cotizacion.mei.reparto.trabajador, 2)} la persona
+            trabajadora. {sistema.cotizacion.mei.senda}
+          </p>
+        </div>
+        <div class="cuadro__item">
+          <p class="eyebrow">Fondo de Reserva</p>
+          <p class="cuadro__v num">{meur(sistema.fondoReserva.saldoMarzo2026MillonesEur)}</p>
+          <p class="cuadro__t">
+            A marzo de 2026. Llegó a tener {meur(sistema.fondoReserva.maximoHistoricoMillonesEur)} en
+            {' '}{sistema.fondoReserva.anyoMaximoHistorico} y se vació casi por completo entre 2012 y 2017
+            para pagar la nómina. Hoy se renutre con el MEI.
+          </p>
+        </div>
+        <div class="cuadro__item">
+          <p class="eyebrow">Base máxima de cotización</p>
+          <p class="cuadro__v num">{eur(sistema.cotizacion.baseMaximaMes, 2)}</p>
+          <p class="cuadro__t">
+            Al mes, frente a {eur(sistema.cotizacion.baseMaximaMes2025, 2)} en 2025. Sobre el tramo de
+            salario que la supera se aplica además una cuota de solidaridad que crece hasta 2045.
+          </p>
+        </div>
+        <div class="cuadro__item">
+          <p class="eyebrow">Saldo del sistema en 2024</p>
+          <p class="cuadro__v num">−{meur(Math.abs(sistema.cuentasSistema.saldoNoFinanciero2024MillonesEur))}</p>
+          <p class="cuadro__t">
+            Saldo no financiero de la Seguridad Social Ampliada, transferencias del Estado
+            incluidas. En 2023 fue de −{meur(Math.abs(sistema.cuentasSistema.saldoNoFinanciero2023MillonesEur))}.
+          </p>
+        </div>
+      </div>
+      <p class="cuadro__fuente">
+        Fuentes: <a href={sistema.cotizacion.url} target="_blank" rel="noopener noreferrer">Orden PJC/297/2026</a>,
+        <a href={sistema.fondoReserva.url} target="_blank" rel="noopener noreferrer">Ministerio de Inclusión</a> y
+        <a href={sistema.cuentasSistema.url} target="_blank" rel="noopener noreferrer">FEDEA (2026)</a>.
+      </p>
+    </div>
+
+    <p>
+      Esto deja el debate en un sitio más honesto de lo que suele plantearse. No hay una pregunta
+      («¿se van a poder pagar las pensiones?») sino tres, y son políticas, no técnicas: cuánto del
+      PIB se quiere dedicar a pensiones, quién lo paga —cotizaciones, impuestos o deuda— y cómo se
+      reparte el ajuste entre quien cobra hoy y quien cobrará en 2060. Las proyecciones no
+      responden a ninguna de las tres. Solo dicen cuánto cuesta cada respuesta.
+    </p>
+
+    <aside class="cierre">
+      <p class="eyebrow eyebrow--accent">Transparencia</p>
+      <h2 class="cierre__t">Todo lo anterior se puede comprobar</h2>
+      <p>
+        Cada gráfico de esta página lleva debajo un desplegable con la fuente exacta, el enlace, la
+        fecha de descarga, la fórmula cuando la cifra es calculada y la tabla con los números que
+        hay detrás del dibujo. Los datos del INE, de Eurostat y de la Seguridad Social se
+        descargan con un script reproducible; los de la Comisión Europea y la OCDE están
+        transcritos de sus informes con la tabla de origen indicada.
+      </p>
+      <p>
+        <a class="cierre__cta" href="/metodologia/">Ver metodología, fuentes y cálculos completos →</a>
+      </p>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  /* ----------------------------------------------------------- portada --- */
+  .portada { padding-block: clamp(2.5rem, 7vw, 5rem) clamp(2rem, 5vw, 3.5rem); }
+  .portada__titulo { margin-top: 1rem; max-width: 36rem; }
+  .portada__em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .portada__dek { margin-top: 1.6rem; }
+
+  .portada__cifras {
+    display: grid;
+    gap: 1.6rem 2rem;
+    margin-top: clamp(2.5rem, 6vw, 4rem);
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  }
+
+  /* --------------------------------------------------------- secciones --- */
+  .article { padding-block: clamp(2.5rem, 6vw, 4.5rem) 0; }
+
+  .seccion { margin: clamp(3rem, 8vw, 6rem) 0 2rem; }
+  .seccion:first-of-type { margin-top: 0; }
+  .seccion__num {
+    margin: 0 0 0.9rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    padding-bottom: 0.55rem;
+    border-bottom: 2px solid var(--ink);
+    display: inline-block;
+    min-width: 2.6rem;
+  }
+  .seccion .dek { margin-top: 1rem; font-size: 1.05rem; }
+
+  /* Primera línea de cada sección con un arranque algo mayor. */
+  .seccion + p { font-size: 1.08em; }
+  .seccion + p::first-letter { font-size: 1.05em; }
+
+  /* ------------------------------------------------------------- notas --- */
+  .nota {
+    margin: 2.5rem 0 3rem;
+    padding: 1.4rem 1.5rem;
+    background: var(--paper-sunken);
+    border-left: 3px solid var(--accent);
+      }
+  .nota > .eyebrow { margin-bottom: 0.6rem; }
+  .nota p { font-size: 0.97rem; line-height: 1.55; margin: 0; }
+  .nota p + p { margin-top: 0.7rem; }
+
+  .nota__lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-family: var(--sans);
+    font-size: 0.82rem;
+  }
+  .nota__lista li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 0.38rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .nota__lista li:last-child { border-bottom: 0; }
+  .nota__lista span:first-child { color: var(--ink-2); }
+  .nota__lista span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .nota__pie {
+    margin-top: 0.9rem !important;
+    font-family: var(--sans);
+    font-size: 0.74rem;
+    color: var(--ink-3);
+  }
+
+  /* ------------------------------------------------------------ cuadro --- */
+  .cuadro {
+    display: grid;
+    gap: 1.6rem 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    padding: 1.6rem 0;
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+  }
+  .cuadro__item > .eyebrow { margin-bottom: 0.5rem; }
+  .cuadro__v {
+    margin: 0;
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+  }
+  .cuadro__t {
+    margin: 0.55rem 0 0;
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .cuadro__fuente {
+    margin: 0.7rem 0 3rem;
+    font-family: var(--sans);
+    font-size: 0.73rem;
+    color: var(--ink-3);
+  }
+  .cuadro__fuente a { margin-right: 0.3rem; }
+
+  /* --------------------------------------------------------- sub-figura -- */
+  .sub-figura { margin-top: 1.8rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); }
+
+  /* ------------------------------------------------------------ cierre --- */
+  .cierre {
+    margin: clamp(3rem, 8vw, 5rem) 0 0;
+    padding: 2rem 0 0;
+    border-top: 2px solid var(--ink);
+  }
+  .cierre__t { margin: 0.6rem 0 1rem; font-size: clamp(1.5rem, 2.8vw, 2rem); }
+  .cierre p { font-size: 1rem; }
+  .cierre__cta {
+    font-family: var(--sans);
+    font-size: 0.86rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 2px;
+  }
+  .cierre__cta:hover { color: var(--accent); }
+</style>

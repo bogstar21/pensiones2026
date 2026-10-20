@@ -1,0 +1,72 @@
+{
+  "ejercicio": 2026,
+  "actualizado": "2026-10-20",
+  "revalorizacion": {
+    "porcentaje2026": 2.7,
+    "regla": "Desde la reforma de 2021 las pensiones contributivas se revalorizan cada año con la media de la inflación interanual (IPC) de los doce meses de diciembre a noviembre del año anterior. Si esa media es negativa, las pensiones no bajan: se mantienen.",
+    "norma": "Real Decreto 241/2026, de 25 de marzo, art. 6",
+    "url": "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-6977",
+    "nota": "El Real Decreto 39/2026 que aprobó inicialmente la revalorización fue derogado y sustituido por el Real Decreto 241/2026 tras no superar la convalidación parlamentaria. La subida aplicada es la misma."
+  },
+  "cuantias": {
+    "unidad": "euros",
+    "pensionMaxima": { "mes": 3359.6, "anyo": 47034.4 },
+    "minimaJubilacion65ConConyuge": { "anyo": 17592.4 },
+    "minimaViudedadCargasFamiliares": { "anyo": 13106.8 },
+    "noContributiva": { "anyo": 8803.2 },
+    "norma": "Real Decreto 241/2026, arts. 3 y 21 y anexo I",
+    "url": "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-6977",
+    "nota": "Las pensiones se pagan en 14 mensualidades al año (12 ordinarias y 2 pagas extraordinarias), salvo las de incapacidad permanente derivada de accidente de trabajo o enfermedad profesional y las de jubilación del SOVI, que se prorratean en 12."
+  },
+  "edadJubilacion": {
+    "anyo2026": { "edadOrdinaria": "66 años y 10 meses", "edadConCarreraLarga": "65 años", "cotizacionParaCarreraLarga": "38 años y 3 meses" },
+    "anyo2027": { "edadOrdinaria": "67 años", "edadConCarreraLarga": "65 años", "cotizacionParaCarreraLarga": "38 años y 6 meses" },
+    "nota": "2026 es el último año del periodo transitorio abierto por la Ley 27/2011: desde 2027 la edad ordinaria queda fija en 67 años, con la excepción permanente de las carreras largas.",
+    "periodoMinimo": "15 años cotizados, de los cuales al menos 2 han de estar dentro de los 15 años inmediatamente anteriores a la jubilación."
+  },
+  "baseReguladora": {
+    "reglaVigente": "Media de las bases de cotización de los últimos 25 años (300 meses), actualizadas con el IPC salvo las de los dos últimos años.",
+    "reformaEnCurso": "La reforma de 2023 introduce de forma gradual una segunda opción de cálculo: los últimos 29 años descartando los 24 meses peores. El desplegue es progresivo y, una vez completado, la persona podrá acogerse a la fórmula que le resulte más favorable.",
+    "norma": "Real Decreto-ley 2/2023, de 16 de marzo",
+    "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2023-7053"
+  },
+  "cotizacion": {
+    "baseMaximaMes": 5101.2,
+    "baseMaximaMes2025": 4909.5,
+    "baseMinimaMes": 1424.4,
+    "tipoContingenciasComunes": 28.3,
+    "repartoContingenciasComunes": { "empresa": 23.6, "trabajador": 4.7 },
+    "mei": {
+      "tipo2026": 0.9,
+      "reparto": { "empresa": 0.75, "trabajador": 0.15 },
+      "destino": "Fondo de Reserva de la Seguridad Social",
+      "senda": "Sube cada año hasta el 1,2 % en 2029 y se mantiene en ese nivel hasta 2050."
+    },
+    "cuotaSolidaridad": "Sobre el tramo de salario que supera la base máxima se cotiza un porcentaje adicional, que crece gradualmente hasta 2045. En 2026 arranca en el 1,15 % para el primer tramo.",
+    "norma": "Orden PJC/297/2026, de 30 de marzo",
+    "url": "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-7296"
+  },
+  "fondoReserva": {
+    "saldoMarzo2026MillonesEur": 15267,
+    "saldoCierre2025MillonesEur": 14069.81,
+    "maximoHistoricoMillonesEur": 66815,
+    "anyoMaximoHistorico": 2011,
+    "nota": "El Fondo se vació casi por completo entre 2012 y 2017 para pagar la nómina de pensiones. Desde 2023 vuelve a dotarse con la recaudación del MEI.",
+    "fuente": "Ministerio de Inclusión, Seguridad Social y Migraciones",
+    "url": "https://revista.seg-social.es/-/el-fondo-de-reserva-de-la-seguridad-social-supera-los-15.200-millones-de-euros-en-abril"
+  },
+  "afiliacion": {
+    "afiliadosMediosSeptiembre2026": 22437553,
+    "periodo": "septiembre de 2026",
+    "fuente": "Ministerio de Inclusión, Seguridad Social y Migraciones · nota de afiliación mensual",
+    "url": "https://www.inclusion.gob.es/en/w/el-empleo-logra-el-mejor-septiembre-de-la-historia-despues-de-sumar-92.327-afiliados-en-el-ultimo-mes-y-739.888-respecto-a-hace-un-ano"
+  },
+  "cuentasSistema": {
+    "saldoNoFinanciero2024MillonesEur": -9519,
+    "saldoNoFinanciero2023MillonesEur": -8745,
+    "concepto": "Saldo presupuestario no financiero de la Seguridad Social Ampliada (incluye las transferencias corrientes del Estado).",
+    "fuente": "FEDEA · «Las cuentas de la Seguridad Social Ampliada. Series 2005-2025, v1.3», de la Fuente (2026)",
+    "url": "https://documentos.fedea.net/pubs/ap/2026/ap2026-03.pdf",
+    "nota": "FEDEA reconstruye las cuentas del sistema a partir de la Cuenta General de la Seguridad Social y la liquidación de los PGE. Es una elaboración académica sobre fuentes oficiales, no una cifra publicada por el Gobierno."
+  }
+}

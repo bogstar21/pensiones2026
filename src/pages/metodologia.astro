@@ -1,0 +1,407 @@
+---
+import Base from '../layouts/Base.astro';
+import { FUENTES } from '../data/fuentes';
+import { CALCULOS } from '../data/calculos';
+import ss from '../data/generated/seguridad-social.json';
+import ine from '../data/generated/ine-proyecciones.json';
+import euro from '../data/generated/eurostat.json';
+import ue from '../data/proyecciones-ue.json';
+import ocde from '../data/comparativa-ocde.json';
+
+const fechaLarga = (iso: string) =>
+  new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+
+const ACCESO: Record<string, string> = {
+  api: 'Descarga automática por API',
+  fichero: 'Hoja de cálculo oficial descargada',
+  documento: 'Transcrito de un documento publicado',
+};
+
+const GLOSARIO = [
+  {
+    termino: 'Pensión y pensionista',
+    texto:
+      'No son lo mismo. La Seguridad Social publica el número de pensiones en vigor, y una misma ' +
+      'persona puede cobrar más de una (típicamente jubilación y viudedad). Los pensionistas son ' +
+      'por tanto menos que las pensiones. Este sitio usa siempre pensiones, salvo en la proyección ' +
+      'europea, que razona en personas y lo indica de forma expresa.',
+  },
+  {
+    termino: 'ESSPROS',
+    texto:
+      'El sistema europeo de estadísticas de protección social. Es la base de las comparaciones ' +
+      'entre países porque aplica el mismo perímetro a todos: incluye jubilación, viudedad e ' +
+      'incapacidad y también los esquemas privados obligatorios. Por eso su cifra para España no ' +
+      'coincide con el gasto del presupuesto de la Seguridad Social, que mide otra cosa.',
+  },
+  {
+    termino: 'Tasa de sustitución',
+    texto:
+      'La proporción del último salario que repone la primera pensión. Las tasas de la OCDE son ' +
+      'teóricas: suponen carrera completa sin interrupciones y jubilación a la edad normal del ' +
+      'país. Describen el diseño del sistema, no lo que cobra la gente real.',
+  },
+  {
+    termino: 'Ratio de prestación (benefit ratio)',
+    texto:
+      'La pensión media del sistema dividida entre el salario medio de la economía. A diferencia ' +
+      'de la tasa de sustitución, mide el stock completo de pensiones en vigor, no solo las nuevas. ' +
+      'Cuando cae no significa que las pensiones bajen en euros: significa que los salarios crecen ' +
+      'más deprisa.',
+  },
+  {
+    termino: 'Tasa de dependencia',
+    texto:
+      'Cuántas personas mayores de 64 años hay por cada cien de 16 a 64. Es demografía pura: no ' +
+      'distingue quién trabaja ni quién cobra pensión. La «ratio de dependencia del sistema» del ' +
+      'Ageing Report es distinta: divide pensionistas entre ocupados.',
+  },
+  {
+    termino: 'Revalorización',
+    texto:
+      'La subida anual de las pensiones ya concedidas. Desde la reforma de 2021 la fija la ley con ' +
+      'la media de la inflación interanual de diciembre a noviembre del año anterior, y nunca puede ' +
+      'ser negativa. La estadística oficial permite separar cuánto de la nómina actual es ' +
+      'revalorización acumulada y cuánto es la pensión reconocida al concederla.',
+  },
+  {
+    termino: 'Proyección',
+    texto:
+      'Un escenario condicionado, no un pronóstico. Dice qué ocurriría si se mantuvieran ciertos ' +
+      'supuestos. Ni el INE ni la Comisión Europea afirman que vaya a pasar, y ambos lo advierten ' +
+      'de forma explícita en sus publicaciones.',
+  },
+];
+
+const LIMITES = [
+  {
+    titulo: 'El gasto anual se estima anualizando un mes',
+    texto:
+      'La Seguridad Social publica la nómina mensual, no el gasto anual cerrado. Multiplicar por ' +
+      'las catorce pagas supone una nómina constante todo el año, cuando en realidad crece mes a ' +
+      'mes, así que la cifra queda algo por debajo de lo que se liquidará. Tampoco incluye las ' +
+      'pensiones no contributivas ni las de Clases Pasivas.',
+  },
+  {
+    titulo: 'El porcentaje sobre PIB mezcla dos años',
+    texto:
+      'El numerador es de 2026 y el denominador, del último PIB anual cerrado que publica ' +
+      `Eurostat (${euro.pibEspana.at(-1)!.anyo}). Como el PIB sigue creciendo, el porcentaje real de ` +
+      '2026 será algo menor. Para comparaciones internacionales se usa siempre la serie ESSPROS, ' +
+      'que no tiene este problema.',
+  },
+  {
+    titulo: 'Dos ediciones distintas de proyección demográfica',
+    texto:
+      'Los datos de población y natalidad proyectados vienen de la edición 2026-2075 de las ' +
+      'Proyecciones del INE. Las proyecciones de gasto vienen del Ageing Report de 2024, que usa ' +
+      'la demografía de Eurostat con base 2022. No son exactamente la misma hipótesis demográfica, ' +
+      'y por eso no se mezclan dentro de un mismo gráfico.',
+  },
+  {
+    titulo: 'Las cifras de la OCDE y de la Comisión están transcritas a mano',
+    texto:
+      'No publican API abierta para estas tablas, así que están copiadas de sus informes y se ' +
+      'indica la tabla y la página de origen. Son el único bloque de datos del sitio que no se ' +
+      'regenera de forma automática.',
+  },
+  {
+    titulo: 'El saldo del sistema es una elaboración académica',
+    texto:
+      'El saldo consolidado de la Seguridad Social no se publica de forma directa. Se usa la ' +
+      'reconstrucción de FEDEA sobre la Cuenta General de la Seguridad Social y la liquidación de ' +
+      'los Presupuestos Generales del Estado, que es la referencia habitual, pero no es una cifra ' +
+      'oficial del Gobierno.',
+  },
+];
+
+const INVENTARIO = [
+  { dato: 'Pensiones en vigor, nómina y pensión media por clase y régimen', periodo: `a ${ss.ultimoPeriodo!.periodo} de ${ss.ultimoPeriodo!.anyo}`, fuente: 'INSS', automatico: true },
+  { dato: 'Evolución mensual de pensiones y pensión media', periodo: `${ss.evolucion[0].anyo}-${ss.evolucion.at(-1)!.anyo}`, fuente: 'INSS', automatico: true },
+  { dato: 'Descomposición de la nómina y reparto por sexo', periodo: `a ${ss.ultimoPeriodo!.periodo} de ${ss.ultimoPeriodo!.anyo}`, fuente: 'INSS', automatico: true },
+  { dato: 'Gasto en pensiones sobre PIB en Europa', periodo: `${euro.gastoPibPorPais.ES[0].anyo}-${euro.gastoPibPorPais.ES.at(-1)!.anyo}`, fuente: 'Eurostat (ESSPROS)', automatico: true },
+  { dato: 'Nacimientos, defunciones y fecundidad observados', periodo: `1960-${euro.nacimientos.at(-1)!.anyo}`, fuente: 'Eurostat', automatico: true },
+  { dato: 'PIB a precios corrientes', periodo: `1995-${euro.pibEspana.at(-1)!.anyo}`, fuente: 'Eurostat', automatico: true },
+  { dato: 'Población, nacimientos y defunciones proyectados', periodo: `${ine.nacimientos[0].anyo}-${ine.nacimientos.at(-1)!.anyo}`, fuente: 'INE', automatico: true },
+  { dato: 'Población por sexo y edad para la pirámide', periodo: ine.piramide.anyos.join(', '), fuente: 'INE', automatico: true },
+  { dato: 'Tasas de dependencia y proporción de mayores', periodo: `${ine.tasaDependencia64mas[0].anyo}-${ine.tasaDependencia64mas.at(-1)!.anyo}`, fuente: 'INE', automatico: true },
+  { dato: 'Proyección de gasto, cotizaciones, generosidad y escenarios', periodo: `${ue.anyos[0]}-${ue.anyos.at(-1)}`, fuente: 'Comisión Europea', automatico: false },
+  { dato: 'Tasas de sustitución netas', periodo: 'edición 2025', fuente: 'OCDE', automatico: false },
+  { dato: 'Parámetros legales del ejercicio (cuantías, edades, cotización)', periodo: '2026', fuente: 'BOE', automatico: false },
+];
+---
+
+<Base
+  seccion="metodologia"
+  titulo="Metodología, fuentes y cálculos · Pensiones en España"
+  descripcion="Todas las fuentes, fórmulas, definiciones y limitaciones del informe sobre pensiones en España, con enlaces a los datos originales."
+>
+  <div class="article wrap met">
+    <header class="met__cab">
+      <p class="eyebrow eyebrow--accent">Metodología</p>
+      <h1>Cómo está hecho este informe</h1>
+      <p class="dek">
+        Un gráfico sin fuente es una opinión con ejes. Aquí está todo lo necesario para
+        reconstruir cada cifra del sitio: de dónde sale, cómo se calcula, qué significa
+        exactamente y en qué no se puede confiar.
+      </p>
+    </header>
+
+    <section class="met__sec">
+      <h2>El principio</h2>
+      <p>
+        Solo se usa estadística pública oficial: Seguridad Social, INE, Eurostat, Comisión
+        Europea, OCDE y BOE. No hay estimaciones propias de futuro, ni modelos, ni
+        extrapolaciones. Cuando una cifra es un cálculo, se publica la fórmula y sus entradas; y
+        cuando una cifra admite una lectura equivocada —que es casi siempre— se dice cuál es.
+      </p>
+      <p>
+        Las proyecciones citadas son de sus organismos de origen y describen escenarios
+        condicionados. Nada de lo que hay aquí es asesoramiento financiero ni una previsión
+        propia.
+      </p>
+    </section>
+
+    <section class="met__sec bleed-right">
+      <h2>Cómo se obtienen los datos</h2>
+      <p class="met__p">
+        La mayor parte del sitio se regenera con un script sin dependencias externas. Descarga
+        las series de la API Tempus3 del INE y de la API de difusión de Eurostat, y localiza las
+        hojas de cálculo de la Seguridad Social leyendo los enlaces de su propia página de
+        estadísticas, porque sus URL cambian en cada publicación mensual.
+      </p>
+      <pre class="met__codigo"><code>npm run datos        # actualiza INE, Eurostat y Seguridad Social
+node scripts/fetch-data.mjs ine euro   # solo algunas fuentes</code></pre>
+      <p class="met__p">
+        Cada fichero generado guarda dentro la URL exacta de la que salió y la fecha de descarga.
+        Los bloques que no se pueden automatizar —las tablas del Ageing Report, las de la OCDE y
+        los parámetros legales del BOE— están transcritos a mano indicando la tabla y el artículo
+        de origen.
+      </p>
+
+      <div class="scroll-x met__tabla">
+        <table>
+          <thead>
+            <tr><th scope="col">Dato</th><th scope="col">Periodo</th><th scope="col">Fuente</th><th scope="col">Actualización</th></tr>
+          </thead>
+          <tbody>
+            {INVENTARIO.map((i) => (
+              <tr>
+                <th scope="row">{i.dato}</th>
+                <td>{i.periodo}</td>
+                <td>{i.fuente}</td>
+                <td>{i.automatico ? 'Automática' : 'Manual'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="met__sec bleed-right">
+      <h2>Las fuentes, una por una</h2>
+      <ol class="fuentes">
+        {FUENTES.map((f, i) => (
+          <li class="fuentes__it">
+            <p class="fuentes__n num">{String(i + 1).padStart(2, '0')}</p>
+            <div>
+              <h3 class="fuentes__t">
+                <a href={f.url} target="_blank" rel="noopener noreferrer">{f.titulo}</a>
+              </h3>
+              <p class="fuentes__m num">
+                {f.organismo} · {f.periodo} · {ACCESO[f.acceso]} · consultado el {fechaLarga(f.consultado)}
+              </p>
+              {f.nota && <p class="fuentes__nota">{f.nota}</p>}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="met__sec bleed-right">
+      <h2>Los cálculos</h2>
+      <p class="met__p">
+        Estas son todas las cifras del sitio que no vienen tal cual de una fuente. Se calculan en
+        un único módulo y se muestran aquí con el mismo resultado que aparece en el informe, así
+        que no pueden quedar desincronizadas.
+      </p>
+      <div class="calcs">
+        {CALCULOS.map((c) => (
+          <article class="calc">
+            <h3 class="calc__t">{c.titulo}</h3>
+            <p class="calc__f num">{c.formula}</p>
+            <ul class="calc__e">
+              {c.entradas.map((e) => (
+                <li><span>{e.etiqueta}</span><span class="num">{e.valor}</span></li>
+              ))}
+              <li class="calc__r"><span>Resultado</span><span class="num">{c.resultado}</span></li>
+            </ul>
+            {c.nota && <p class="calc__n">{c.nota}</p>}
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="met__sec">
+      <h2>Qué significa cada término</h2>
+      <dl class="glos">
+        {GLOSARIO.map((g) => (
+          <div class="glos__it">
+            <dt>{g.termino}</dt>
+            <dd>{g.texto}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    <section class="met__sec">
+      <h2>Lo que este informe no puede hacer</h2>
+      <ol class="limites">
+        {LIMITES.map((l) => (
+          <li>
+            <h3 class="limites__t">{l.titulo}</h3>
+            <p>{l.texto}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="met__sec">
+      <h2>Licencia de los datos</h2>
+      <p>
+        Las estadísticas del INE, de la Seguridad Social y del resto de organismos públicos
+        españoles son reutilizables en los términos de la Ley 37/2007 sobre reutilización de la
+        información del sector público, citando la fuente. Eurostat permite la reutilización con
+        atribución. Los informes de la Comisión Europea y de la OCDE tienen sus propias
+        condiciones de reutilización, enlazadas en cada publicación. Aquí se citan siempre
+        organismo, publicación y fecha de consulta.
+      </p>
+      <p class="met__volver">
+        <a href="/">← Volver al informe</a>
+      </p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .met { padding-block: clamp(2.5rem, 6vw, 4rem) 0; }
+  .met__cab { margin-bottom: clamp(2.5rem, 6vw, 4rem); }
+  .met__cab h1 { margin-top: 0.9rem; font-size: clamp(2rem, 4.5vw, 3.2rem); }
+  .met__cab .dek { margin-top: 1.4rem; }
+
+  .met__sec { margin-bottom: clamp(3rem, 7vw, 5rem); }
+  .met__sec h2 {
+    font-size: clamp(1.4rem, 2.4vw, 1.8rem);
+    padding-bottom: 0.7rem;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 1.4rem;
+  }
+  .met__sec > p, .met__p { max-width: var(--measure); }
+
+  .met__codigo {
+    margin: 1.4rem 0;
+    padding: 0.9rem 1.1rem;
+    background: var(--paper-sunken);
+    border-left: 3px solid var(--rule-strong);
+    border-radius: 0 3px 3px 0;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .met__tabla { margin-top: 1.8rem; }
+
+  /* ----------------------------------------------------------- fuentes -- */
+  .fuentes { list-style: none; margin: 0; padding: 0; }
+  .fuentes__it {
+    display: grid;
+    grid-template-columns: 2.4rem minmax(0, 1fr);
+    gap: 0.4rem 0.8rem;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .fuentes__it:first-child { border-top: 1px solid var(--rule); }
+  .fuentes__n { margin: 0; font-size: 0.78rem; font-weight: 600; color: var(--accent); padding-top: 0.2rem; }
+  .fuentes__t { font-size: 1.02rem; margin: 0; }
+  .fuentes__m {
+    margin: 0.3rem 0 0;
+    font-size: 0.74rem;
+    color: var(--ink-3);
+  }
+  .fuentes__nota {
+    margin: 0.55rem 0 0;
+    font-family: var(--sans);
+    font-size: 0.79rem;
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 44rem;
+  }
+
+  /* --------------------------------------------------------- calculos --- */
+  .calcs {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 1.6rem;
+  }
+  @media (min-width: 58rem) {
+    .calcs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 2.2rem; }
+  }
+  .calc {
+    padding: 1.2rem 1.3rem;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+  }
+  .calc__t { font-size: 1rem; margin: 0 0 0.7rem; }
+  .calc__f {
+    margin: 0 0 0.8rem;
+    padding: 0.45rem 0.65rem;
+    background: var(--paper-sunken);
+    border-radius: 3px;
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    color: var(--ink);
+  }
+  .calc__e { list-style: none; margin: 0; padding: 0; font-family: var(--sans); font-size: 0.8rem; }
+  .calc__e li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.2rem;
+    padding: 0.32rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .calc__e li > span:first-child { color: var(--ink-2); }
+  .calc__e li > span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .calc__r { font-weight: 600; border-bottom: 0 !important; border-top: 1px solid var(--ink-3); }
+  .calc__n {
+    margin: 0.8rem 0 0;
+    font-family: var(--sans);
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--ink-2);
+    padding-left: 0.7rem;
+    border-left: 2px solid var(--rule-strong);
+  }
+
+  /* --------------------------------------------------------- glosario --- */
+  .glos { margin: 0; }
+  .glos__it { padding: 1.1rem 0; border-bottom: 1px solid var(--rule); }
+  .glos__it:first-child { border-top: 1px solid var(--rule); }
+  .glos dt {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin-bottom: 0.4rem;
+  }
+  .glos dd { margin: 0; font-size: 0.98rem; line-height: 1.55; color: var(--ink-2); }
+
+  /* ---------------------------------------------------------- limites --- */
+  .limites { margin: 0; padding-left: 1.3rem; }
+  .limites li { margin-bottom: 1.3rem; }
+  .limites__t { font-size: 1rem; margin: 0 0 0.4rem; }
+  .limites p { margin: 0; font-size: 0.97rem; color: var(--ink-2); }
+
+  .met__volver { margin-top: 2rem; font-family: var(--sans); font-size: 0.86rem; font-weight: 500; }
+</style>

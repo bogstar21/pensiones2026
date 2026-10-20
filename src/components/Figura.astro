@@ -1,0 +1,216 @@
+---
+/**
+ * Envoltorio de toda figura del sitio. Lleva el titulo, el grafico, la leyenda
+ * y —desplegable— el panel de transparencia: fuente exacta con enlace y fecha,
+ * la formula cuando el dato es calculado, las advertencias de interpretacion y
+ * la tabla con las cifras que hay detras del dibujo.
+ */
+import { FUENTES, type Fuente } from '../data/fuentes';
+import { CALCULOS } from '../data/calculos';
+
+export type Tabla = { columnas: string[]; filas: (string | number)[][]; alineaPrimera?: 'left' | 'right' };
+
+interface Props {
+  id: string;
+  eyebrow?: string;
+  titulo: string;
+  dek?: string;
+  unidad?: string;
+  fuentes: string[];
+  calculo?: string;
+  advertencia?: string;
+  tabla?: Tabla;
+}
+
+const { id, eyebrow, titulo, dek, unidad, fuentes, calculo, advertencia, tabla } = Astro.props;
+
+const usadas: Fuente[] = fuentes.map((fid) => {
+  const f = FUENTES.find((x) => x.id === fid);
+  if (!f) throw new Error(`Figura "${id}": fuente desconocida "${fid}"`);
+  return f;
+});
+const calc = calculo ? CALCULOS.find((c) => c.id === calculo) : undefined;
+if (calculo && !calc) throw new Error(`Figura "${id}": cálculo desconocido "${calculo}"`);
+---
+
+<figure class="figura" id={id}>
+  <header class="figura__cab">
+    {eyebrow && <p class="eyebrow eyebrow--accent">{eyebrow}</p>}
+    <h3 class="figura__titulo">{titulo}</h3>
+    {dek && <p class="figura__dek">{dek}</p>}
+    {unidad && <p class="figura__unidad num">{unidad}</p>}
+  </header>
+
+  <div class="figura__lienzo">
+    <slot />
+  </div>
+
+  <slot name="pie" />
+
+  <details class="transp">
+    <summary class="transp__btn">
+      <svg class="transp__icono" viewBox="0 0 16 16" aria-hidden="true" width="13" height="13">
+        <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Fuentes, cálculo y datos
+    </summary>
+
+    <div class="transp__cuerpo">
+      <section class="transp__bloque">
+        <p class="eyebrow">De dónde sale</p>
+        <ul class="transp__fuentes">
+          {usadas.map((f) => (
+            <li>
+              <a href={f.url} target="_blank" rel="noopener noreferrer">{f.titulo}</a>
+              <span class="transp__meta num">
+                {f.organismo} · {f.periodo} · consultado el {new Date(f.consultado).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                {' · '}
+                {f.acceso === 'api' ? 'descarga automática por API' : f.acceso === 'fichero' ? 'hoja de cálculo oficial' : 'documento publicado'}
+              </span>
+              {f.nota && <span class="transp__nota">{f.nota}</span>}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {calc && (
+        <section class="transp__bloque">
+          <p class="eyebrow">Cómo se calcula</p>
+          <p class="transp__formula num">{calc.formula}</p>
+          <ul class="transp__entradas">
+            {calc.entradas.map((e) => (
+              <li><span>{e.etiqueta}</span><span class="num">{e.valor}</span></li>
+            ))}
+            <li class="transp__entradas-res"><span>Resultado</span><span class="num">{calc.resultado}</span></li>
+          </ul>
+          {calc.nota && <p class="transp__nota transp__nota--bloque">{calc.nota}</p>}
+        </section>
+      )}
+
+      {advertencia && (
+        <section class="transp__bloque">
+          <p class="eyebrow">Cómo no leerlo mal</p>
+          <p class="transp__nota transp__nota--bloque">{advertencia}</p>
+        </section>
+      )}
+
+      {tabla && (
+        <section class="transp__bloque">
+          <p class="eyebrow">Los datos</p>
+          <div class="scroll-x">
+            <table>
+              <thead>
+                <tr>{tabla.columnas.map((c) => <th scope="col">{c}</th>)}</tr>
+              </thead>
+              <tbody>
+                {tabla.filas.map((fila) => (
+                  <tr>{fila.map((celda, i) => (i === 0 ? <th scope="row">{celda}</th> : <td>{celda}</td>))}</tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+    </div>
+  </details>
+</figure>
+
+<style>
+  .figura { margin: 0 0 3.5rem; }
+
+  .figura__cab { margin-bottom: 1.1rem; max-width: 42rem; }
+  .figura__titulo {
+    font-size: clamp(1.15rem, 1.5vw, 1.4rem);
+    letter-spacing: -0.01em;
+    margin-top: 0.3rem;
+  }
+  .figura__dek {
+    font-size: 0.98rem;
+    line-height: 1.5;
+    color: var(--ink-2);
+    margin: 0.5rem 0 0;
+  }
+  .figura__unidad {
+    font-size: 0.74rem;
+    color: var(--ink-3);
+    margin: 0.55rem 0 0;
+    letter-spacing: 0.01em;
+  }
+
+  .figura__lienzo { margin-top: 0.5rem; }
+
+  /* --- panel de transparencia --- */
+
+  .transp {
+    margin-top: 1.1rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .transp__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 0 0;
+    font-family: var(--sans);
+    font-size: 0.76rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--ink-3);
+    cursor: pointer;
+    list-style: none;
+    transition: color 0.15s;
+  }
+  .transp__btn::-webkit-details-marker { display: none; }
+  .transp__btn:hover { color: var(--accent); }
+  .transp__icono { transition: transform 0.18s ease; flex: none; }
+  .transp[open] .transp__icono { transform: rotate(-180deg); }
+  @media (prefers-reduced-motion: reduce) { .transp__icono { transition: none; } }
+
+  .transp__cuerpo {
+    display: grid;
+    gap: 1.6rem;
+    padding: 1.1rem 0 1.4rem;
+    font-family: var(--sans);
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+  @media (min-width: 60rem) {
+    .transp__cuerpo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.6rem 2.5rem; }
+    .transp__bloque:has(table) { grid-column: 1 / -1; }
+  }
+
+  .transp__bloque > .eyebrow { margin-bottom: 0.6rem; }
+
+  .transp__fuentes { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+  .transp__fuentes li { display: grid; gap: 0.2rem; }
+  .transp__fuentes a { font-weight: 500; }
+
+  .transp__meta { font-size: 0.73rem; color: var(--ink-3); }
+  .transp__nota { font-size: 0.76rem; color: var(--ink-2); }
+  .transp__nota--bloque {
+    margin: 0;
+    padding-left: 0.8rem;
+    border-left: 2px solid var(--rule-strong);
+    font-size: 0.8rem;
+  }
+
+  .transp__formula {
+    margin: 0 0 0.7rem;
+    padding: 0.5rem 0.7rem;
+    background: var(--paper-sunken);
+    border-radius: 3px;
+    font-size: 0.8rem;
+    color: var(--ink);
+  }
+
+  .transp__entradas { list-style: none; margin: 0 0 0.7rem; padding: 0; }
+  .transp__entradas li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 0.33rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .transp__entradas li > span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .transp__entradas-res { font-weight: 600; border-bottom: 0 !important; border-top: 1px solid var(--ink-3); margin-top: 0.15rem; }
+</style>

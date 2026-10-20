@@ -1,0 +1,205 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  titulo: string;
+  descripcion: string;
+  /** Marca el enlace activo en la cabecera. */
+  seccion?: 'informe' | 'metodologia';
+}
+const { titulo, descripcion, seccion = 'informe' } = Astro.props;
+const anyo = new Date().getFullYear();
+---
+<!doctype html>
+<html lang="es" prefix="og: https://ogp.me/ns#">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo}</title>
+    <meta name="description" content={descripcion} />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:title" content={titulo} />
+    <meta property="og:description" content={descripcion} />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="es_ES" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site ?? 'http://localhost:4321').href} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <script is:inline>
+      // Antes de pintar, para que no haya destello al cargar en modo oscuro.
+      try {
+        const t = localStorage.getItem('tema');
+        if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+  </head>
+
+  <body>
+    <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+    <header class="cab">
+      <div class="wrap cab__fila">
+        <a class="cab__marca" href="/">
+          <span class="cab__marca-t">Pensiones&nbsp;en&nbsp;España</span>
+          <span class="cab__marca-s">informe con datos oficiales</span>
+        </a>
+        <nav class="cab__nav" aria-label="Secciones">
+          <a href="/" aria-current={seccion === 'informe' ? 'page' : undefined}>El informe</a>
+          <a href="/metodologia/" aria-current={seccion === 'metodologia' ? 'page' : undefined}>Metodología</a>
+          <button class="tema" type="button" data-tema aria-label="Cambiar entre tema claro y oscuro">
+            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+              <circle cx="8" cy="8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.5" />
+              <path
+                d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.1 3.1l1.1 1.1M11.8 11.8l1.1 1.1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </nav>
+      </div>
+      <hr class="rule" />
+    </header>
+
+    <main id="contenido">
+      <slot />
+    </main>
+
+    <footer class="pie">
+      <hr class="rule" />
+      <div class="wrap pie__cuerpo">
+        <div class="pie__col">
+          <p class="eyebrow">Sobre este sitio</p>
+          <p>
+            Un análisis del sistema público de pensiones español construido solo con
+            estadística oficial. Cada cifra lleva al lado su fuente, su fecha de descarga
+            y, cuando es calculada, la fórmula exacta.
+          </p>
+        </div>
+        <div class="pie__col">
+          <p class="eyebrow">Datos</p>
+          <ul class="pie__lista">
+            <li><a href="https://www.seg-social.es/wps/portal/wss/internet/EstadisticasPresupuestosEstudios/Estadisticas/est23/est24" target="_blank" rel="noopener noreferrer">Seguridad Social</a></li>
+            <li><a href="https://www.ine.es/" target="_blank" rel="noopener noreferrer">INE</a></li>
+            <li><a href="https://ec.europa.eu/eurostat" target="_blank" rel="noopener noreferrer">Eurostat</a></li>
+            <li><a href="https://economy-finance.ec.europa.eu/publications/2024-ageing-report-economic-and-budgetary-projections-eu-member-states-2022-2070_en" target="_blank" rel="noopener noreferrer">Ageing Report</a></li>
+            <li><a href="https://www.oecd.org/en/publications/pensions-at-a-glance-2025_e40274c1-en.html" target="_blank" rel="noopener noreferrer">OCDE</a></li>
+          </ul>
+        </div>
+        <div class="pie__col">
+          <p class="eyebrow">Advertencia</p>
+          <p>
+            No es asesoramiento financiero ni una previsión propia. Las proyecciones citadas
+            son de sus organismos de origen y describen escenarios condicionados, no
+            pronósticos.
+          </p>
+          <p class="pie__meta num">Actualizado en octubre de {anyo}</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      import '../scripts/hover';
+
+      const raiz = document.documentElement;
+      const boton = document.querySelector<HTMLButtonElement>('[data-tema]');
+      boton?.addEventListener('click', () => {
+        const oscuroAhora =
+          raiz.dataset.theme === 'dark' ||
+          (!raiz.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+        const siguiente = oscuroAhora ? 'light' : 'dark';
+        raiz.dataset.theme = siguiente;
+        try { localStorage.setItem('tema', siguiente); } catch {}
+      });
+    </script>
+
+    <style>
+      .saltar {
+        position: absolute;
+        left: 0.5rem; top: -3rem;
+        z-index: 10;
+        padding: 0.5rem 0.8rem;
+        background: var(--paper-raised);
+        border: 1px solid var(--rule-strong);
+        border-radius: 3px;
+        font-family: var(--sans);
+        font-size: 0.8rem;
+        transition: top 0.15s;
+      }
+      .saltar:focus { top: 0.5rem; }
+
+      .cab { position: sticky; top: 0; z-index: 5; background: var(--paper); }
+      .cab__fila {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1.5rem;
+        padding-block: 0.7rem;
+      }
+      .cab__marca { text-decoration: none; display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+      .cab__marca-t { font-weight: 600; font-size: 1.02rem; letter-spacing: -0.012em; }
+      .cab__marca-s {
+        font-family: var(--sans);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+      }
+      .cab__nav {
+        display: flex;
+        align-items: center;
+        gap: 1.1rem;
+        font-family: var(--sans);
+        font-size: 0.8rem;
+      }
+      .cab__nav a { text-decoration: none; color: var(--ink-2); white-space: nowrap; }
+      .cab__nav a:hover { color: var(--accent); }
+      .cab__nav a[aria-current='page'] { color: var(--ink); font-weight: 600; }
+
+      .tema {
+        display: grid;
+        place-items: center;
+        width: 1.9rem; height: 1.9rem;
+        padding: 0;
+        background: none;
+        border: 1px solid var(--rule);
+        border-radius: 50%;
+        color: var(--ink-3);
+        cursor: pointer;
+      }
+      .tema:hover { color: var(--accent); border-color: var(--rule-strong); }
+
+      .pie { margin-top: 5rem; }
+      .pie__cuerpo {
+        display: grid;
+        gap: 2rem;
+        padding-block: 2.5rem 4rem;
+        font-family: var(--sans);
+        font-size: 0.82rem;
+        line-height: 1.6;
+        color: var(--ink-2);
+      }
+      @media (min-width: 52rem) {
+        .pie__cuerpo { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem; }
+      }
+      .pie__col > .eyebrow { margin-bottom: 0.7rem; }
+      .pie__col p { margin: 0 0 0.7rem; max-width: 26rem; }
+      .pie__lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+      .pie__meta { font-size: 0.72rem; color: var(--ink-3); }
+
+      @media (max-width: 34rem) {
+        .cab__marca-s { display: none; }
+        .cab__fila { gap: 0.8rem; }
+        .cab__marca-t { font-size: 0.92rem; }
+        .cab__nav { gap: 0.8rem; font-size: 0.76rem; }
+      }
+    </style>
+  </body>
+</html>

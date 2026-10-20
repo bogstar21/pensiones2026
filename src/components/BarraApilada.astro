@@ -1,0 +1,64 @@
+---
+/** Una sola barra apilada para repartos parte-todo de hasta cinco tramos.
+ *  Hay 2px de hueco de fondo entre tramos: nunca un borde dibujado. */
+interface Props {
+  tramos: { etiqueta: string; valor: number; slot: 1 | 2 | 3 | 4 | 5 }[];
+  total?: number;
+  formato?: (v: number, cuota: number) => string;
+}
+const { tramos, formato } = Astro.props;
+const total = Astro.props.total ?? tramos.reduce((a, t) => a + t.valor, 0);
+const n = (v: number, d = 0) => v.toLocaleString('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d });
+const porDefecto = (_v: number, cuota: number) => `${n(cuota, 1)} %`;
+const etiquetar = formato ?? porDefecto;
+---
+<div class="ba">
+  <div class="ba__barra">
+    {tramos.map((t) => (
+      <span
+        class={`ba__tramo ba__s${t.slot}`}
+        style={`flex:${t.valor}`}
+        title={`${t.etiqueta}: ${etiquetar(t.valor, (t.valor / total) * 100)}`}
+      ></span>
+    ))}
+  </div>
+  <ul class="ba__claves">
+    {tramos.map((t) => (
+      <li>
+        <span class={`ba__sw ba__s${t.slot}`}></span>
+        <span class="ba__et">{t.etiqueta}</span>
+        <span class="ba__vl num">{etiquetar(t.valor, (t.valor / total) * 100)}</span>
+      </li>
+    ))}
+  </ul>
+</div>
+<style>
+  .ba { font-family: var(--sans); }
+  .ba__barra { display: flex; gap: 2px; height: 2.6rem; }
+  .ba__tramo { border-radius: 2px; min-width: 2px; }
+  .ba__s1 { background: var(--s1); }
+  .ba__s2 { background: var(--s2); }
+  .ba__s3 { background: var(--s3); }
+  .ba__s4 { background: var(--s4); }
+  .ba__s5 { background: var(--s5); }
+
+  .ba__claves {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.1rem;
+    font-size: 0.8rem;
+  }
+  .ba__claves li {
+    display: grid;
+    grid-template-columns: 0.6rem 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.33rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .ba__sw { width: 0.6rem; height: 0.6rem; border-radius: 1px; }
+  .ba__et { color: var(--ink-2); }
+  .ba__vl { font-variant-numeric: tabular-nums; font-weight: 600; }
+</style>
