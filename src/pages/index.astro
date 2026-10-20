@@ -940,9 +940,13 @@ const fechaSs = periodoTexto(PERIODO_SS);
         </div>
       </div>
       <p class="cuadro__fuente">
-        Fuentes: <a href={sistema.cotizacion.url} target="_blank" rel="noopener noreferrer">Orden PJC/297/2026</a>,
-        <a href={sistema.fondoReserva.url} target="_blank" rel="noopener noreferrer">Ministerio de Inclusión</a> y
-        <a href={sistema.cuentasSistema.url} target="_blank" rel="noopener noreferrer">FEDEA (2026)</a>.
+        <span>Fuentes: </span>
+        <a href={sistema.cotizacion.url} target="_blank" rel="noopener noreferrer">Orden PJC/297/2026</a>
+        <span>, </span>
+        <a href={sistema.fondoReserva.url} target="_blank" rel="noopener noreferrer">Ministerio de Inclusión</a>
+        <span> y </span>
+        <a href={sistema.cuentasSistema.url} target="_blank" rel="noopener noreferrer">FEDEA (2026)</a>
+        <span>.</span>
       </p>
     </div>
 
@@ -1072,7 +1076,6 @@ const fechaSs = periodoTexto(PERIODO_SS);
     font-size: 0.73rem;
     color: var(--ink-3);
   }
-  .cuadro__fuente a { margin-right: 0.3rem; }
 
   /* --------------------------------------------------------- sub-figura -- */
   .sub-figura { margin-top: 1.8rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); }
